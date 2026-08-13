@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import bank from "@/data/questions.json";
+import bank from "@/data/questions.generated.json";
 import { authorCopy } from "@/lib/agent/author";
 import {
   buildPredictionCheck,
@@ -163,25 +163,35 @@ function packSessions(
     "strategy",
   ];
 
-  return kinds.map((kind, day) => ({
-    id: `${route.id}-s${day}`,
-    routeId: route.id,
-    title: BLOCK_TITLE[kind],
-    kind,
-    // The two blocks on the primary weakness get different framing so the
-    // route reads as a progression rather than the same session twice.
-    intent: day === 1 && kinds[0] === kind ? FOLLOW_UP[kind] : INTENT[kind],
-    estimatedMinutes: kind === "reading" ? 12 : kind === "strategy" ? 10 : 8,
-    // Offset by day so consecutive blocks don't repeat the same questions.
-    questionIds: selectQuestions(
+  // Withhold questions already assigned to an earlier block, so no two blocks
+  // in a route serve the same item. This replaces an earlier rotation of the
+  // input list, which stopped separating the blocks once the bank grew large
+  // enough that a two-question shift no longer changed the ranking.
+  const assigned = new Set<string>();
+
+  return kinds.map((kind, day) => {
+    const questionIds = selectQuestions(
       diagnosis,
-      questions.slice(day * 2).concat(questions.slice(0, day * 2)),
+      questions.filter((q) => !assigned.has(q.id)),
       attempts,
       4
-    ),
-    completedAt: null,
-    day,
-  }));
+    );
+    questionIds.forEach((id) => assigned.add(id));
+
+    return {
+      id: `${route.id}-s${day}`,
+      routeId: route.id,
+      title: BLOCK_TITLE[kind],
+      kind,
+      // The two blocks on the primary weakness get different framing so the
+      // route reads as a progression rather than the same session twice.
+      intent: day === 1 && kinds[0] === kind ? FOLLOW_UP[kind] : INTENT[kind],
+      estimatedMinutes: kind === "reading" ? 12 : kind === "strategy" ? 10 : 8,
+      questionIds,
+      completedAt: null,
+      day,
+    };
+  });
 }
 
 const INTENT: Record<TrainingKind, string> = {

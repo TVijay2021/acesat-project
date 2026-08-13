@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "seed": "node scripts/build-question-bank.mjs",
+    "seed": "node scripts/build-generated-bank.mjs",
     "test": "tsx scripts/agent-smoke.ts"
   },
   "dependencies": {

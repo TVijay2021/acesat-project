@@ -1,8 +1,8 @@
-import bank from "../data/questions.json";
+import generatedBank from "../data/questions.generated.json";
 import { db } from "./db";
 import type { Attempt, Decision, Question, Route, TrainingSession } from "./types";
 
-const questions = bank.questions as Question[];
+const allQuestions = generatedBank.questions as Question[];
 
 const DAY = 86_400_000;
 
@@ -18,7 +18,7 @@ export async function seedIfEmpty(): Promise<void> {
   const existing = await db.questions.count();
   if (existing > 0) return;
 
-  await db.questions.bulkPut(questions);
+  await db.questions.bulkPut(allQuestions);
 
   const now = Date.now();
   const attempts: Attempt[] = [];
@@ -39,24 +39,26 @@ export async function seedIfEmpty(): Promise<void> {
     });
   }
 
-  const byDomain = (domain: string) =>
-    questions.filter((q) => q.domain === domain);
+  // Fixed-size slices. The bank is free to grow without changing the accuracy
+  // and pacing figures this history is tuned to produce.
+  const byDomain = (domain: string, count: number) =>
+    allQuestions.filter((q) => q.domain === domain).slice(0, count);
 
   // Knows algebra, burns clock on it. This is the pattern Beacon should find.
-  for (const [i, q] of byDomain("Algebra").entries()) {
+  for (const [i, q] of byDomain("Algebra", 6).entries()) {
     log(q, i !== 1, 88_000 + i * 4_000);
   }
-  for (const [i, q] of byDomain("Advanced Math").entries()) {
+  for (const [i, q] of byDomain("Advanced Math", 6).entries()) {
     log(q, i % 3 !== 0, 74_000);
   }
   // A genuine knowledge gap, slower to move.
-  for (const [i, q] of byDomain("Craft and Structure").entries()) {
+  for (const [i, q] of byDomain("Craft and Structure", 6).entries()) {
     log(q, i % 3 === 0, 52_000);
   }
-  for (const [i, q] of byDomain("Information and Ideas").entries()) {
+  for (const [i, q] of byDomain("Information and Ideas", 5).entries()) {
     log(q, i !== 2, 48_000);
   }
-  for (const q of byDomain("Problem-Solving and Data Analysis")) {
+  for (const q of byDomain("Problem-Solving and Data Analysis", 3)) {
     log(q, true, 46_000);
   }
 
@@ -64,7 +66,7 @@ export async function seedIfEmpty(): Promise<void> {
   // what the next check-in grades that prediction against — without them the
   // first sync has no new evidence and the ledger stays pending, which hides
   // the whole point of the product on the first screen a judge touches.
-  for (const [i, q] of byDomain("Algebra").entries()) {
+  for (const [i, q] of byDomain("Algebra", 6).entries()) {
     clock = now - 1.5 * DAY + i * 5 * 60_000;
     attempts.push({
       questionId: q.id,
@@ -202,7 +204,7 @@ function seedRoute(now: number): Route {
 
 function seedSessions(route: Route, now: number): TrainingSession[] {
   const pick = (domain: string, n: number, offset = 0) =>
-    questions
+    allQuestions
       .filter((q) => q.domain === domain)
       .slice(offset, offset + n)
       .map((q) => q.id);

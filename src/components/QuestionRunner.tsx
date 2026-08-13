@@ -5,6 +5,21 @@ import { useBeacon } from "@/lib/store";
 import type { Confidence, MistakeReason, TrainingSession } from "@/lib/types";
 import { Button, Eyebrow } from "./ui";
 
+/**
+ * A stem holds the passage and the question itself, separated by a blank line.
+ * Splitting them lets the passage keep its own line breaks — notes lists rely
+ * on them — and sets the question apart as the thing being asked, instead of
+ * burying it at the end of a run-on paragraph.
+ */
+function splitStem(stem: string): { passage: string; prompt: string } {
+  const at = stem.lastIndexOf("\n\n");
+  if (at === -1) return { passage: "", prompt: stem };
+  return {
+    passage: stem.slice(0, at).trim(),
+    prompt: stem.slice(at + 2).trim(),
+  };
+}
+
 const MISTAKE_REASONS: { id: MistakeReason; label: string }[] = [
   { id: "concept", label: "I didn't know the concept" },
   { id: "misread", label: "I misread the question" },
@@ -123,7 +138,19 @@ export function QuestionRunner({
           </div>
         </div>
 
-        <p className="text-[17px] leading-[1.65]">{question.stem}</p>
+        {(() => {
+          const { passage, prompt } = splitStem(question.stem);
+          return (
+            <div className="space-y-3.5">
+              {passage && (
+                <p className="text-[17px] leading-[1.65] whitespace-pre-line">
+                  {passage}
+                </p>
+              )}
+              <p className="text-[17px] leading-[1.65] font-semibold">{prompt}</p>
+            </div>
+          );
+        })()}
 
         {question.format === "multiple-choice" ? (
           <ul className="space-y-2.5">

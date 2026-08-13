@@ -12,12 +12,25 @@ import type { Attempt, Decision, Question } from "../src/lib/types";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const bank = JSON.parse(
-  readFileSync(resolve(here, "../src/data/questions.json"), "utf8")
+  readFileSync(resolve(here, "../src/data/questions.generated.json"), "utf8")
 ) as { questions: Question[] };
 
 const questions = new Map(bank.questions.map((q) => [q.id, q]));
-const algebra = bank.questions.filter((q) => q.domain === "Algebra");
-const other = bank.questions.filter((q) => q.domain !== "Algebra");
+
+// Fixed-size samples, so the scenario below stays the one described no matter
+// how large the bank grows. Taking the comparison set from the front of the
+// bank would otherwise draw all nine questions from a single domain and make
+// that domain, rather than algebra, look like the weakness.
+const algebra = bank.questions.filter((q) => q.domain === "Algebra").slice(0, 6);
+
+const spread = new Map<string, Question[]>();
+for (const question of bank.questions) {
+  if (question.domain === "Algebra") continue;
+  const seen = spread.get(question.domain) ?? [];
+  if (seen.length < 2) seen.push(question);
+  spread.set(question.domain, seen);
+}
+const other = [...spread.values()].flat().slice(0, 9);
 
 let clock = Date.UTC(2026, 7, 1);
 function attempt(

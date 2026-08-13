@@ -1,7 +1,0 @@
-{
-  "_comment": "The PDF text extractor drops superscripts, so exponents arrive as loose digits (x 2 instead of x²). A blanket regex is unsafe — it corrupts legitimate coefficients like 'equation 2y' — so corrections are listed explicitly per question and verified against the source PDF.",
-  "stems": {
-    "math-7": "g(x) = x² + 55  What is the minimum value of the given function?",
-    "math-9": "(x − 1)² = −4  How many distinct real solutions does the given equation have?"
-  }
-}

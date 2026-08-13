@@ -1,0 +1,494 @@
+{
+  "derivedFrom": "College Board Educator Question Bank export (facts only)",
+  "note": "Statistics and standardized stem formats only. Contains no passages, answer choices, or rationales.",
+  "totalQuestionsAnalyzed": 2554,
+  "sectionMix": {
+    "reading-writing": 0.556,
+    "math": 0.444
+  },
+  "difficultyMix": {
+    "Hard": 0.311,
+    "Medium": 0.351,
+    "Easy": 0.338
+  },
+  "skills": [
+    {
+      "domain": "Information and Ideas",
+      "skill": "Command of Evidence",
+      "section": "reading-writing",
+      "count": 276,
+      "share": 0.1081,
+      "difficultyMix": {
+        "Hard": 0.438,
+        "Easy": 0.264,
+        "Medium": 0.297
+      },
+      "passageWords": {
+        "p10": 18,
+        "median": 84,
+        "p90": 119
+      },
+      "stemWords": {
+        "p10": 12,
+        "median": 17,
+        "p90": 33
+      },
+      "choiceWords": {
+        "p10": 5,
+        "median": 22,
+        "p90": 28
+      },
+      "gridInShare": 0.0
+    },
+    {
+      "domain": "Craft and Structure",
+      "skill": "Words in Context",
+      "section": "reading-writing",
+      "count": 259,
+      "share": 0.1014,
+      "difficultyMix": {
+        "Easy": 0.548,
+        "Medium": 0.22,
+        "Hard": 0.232
+      },
+      "passageWords": {
+        "p10": 36,
+        "median": 48,
+        "p90": 65
+      },
+      "stemWords": {
+        "p10": 13,
+        "median": 13,
+        "p90": 14
+      },
+      "choiceWords": {
+        "p10": 1,
+        "median": 1,
+        "p90": 2
+      },
+      "gridInShare": 0.0
+    },
+    {
+      "domain": "Advanced Math",
+      "skill": "Nonlinear functions",
+      "section": "math",
+      "count": 251,
+      "share": 0.0983,
+      "difficultyMix": {
+        "Medium": 0.359,
+        "Hard": 0.394,
+        "Easy": 0.247
+      },
+      "passageWords": {
+        "p10": 6,
+        "median": 22,
+        "p90": 86
+      },
+      "stemWords": {
+        "p10": 4,
+        "median": 8,
+        "p90": 17
+      },
+      "choiceWords": {
+        "p10": 1,
+        "median": 11,
+        "p90": 19
+      },
+      "gridInShare": 0.558
+    },
+    {
+      "domain": "Algebra",
+      "skill": "Linear equations in two variables",
+      "section": "math",
+      "count": 242,
+      "share": 0.0948,
+      "difficultyMix": {
+        "Medium": 0.315,
+        "Hard": 0.254,
+        "Easy": 0.431
+      },
+      "passageWords": {
+        "p10": 10,
+        "median": 25,
+        "p90": 111
+      },
+      "stemWords": {
+        "p10": 5,
+        "median": 7,
+        "p90": 16
+      },
+      "choiceWords": {
+        "p10": 1,
+        "median": 8,
+        "p90": 12
+      },
+      "gridInShare": 0.585
+    },
+    {
+      "domain": "Expression of Ideas",
+      "skill": "Rhetorical Synthesis",
+      "section": "reading-writing",
+      "count": 204,
+      "share": 0.0799,
+      "difficultyMix": {
+        "Hard": 0.24,
+        "Easy": 0.191,
+        "Medium": 0.569
+      },
+      "passageWords": {
+        "p10": 60,
+        "median": 82,
+        "p90": 103
+      },
+      "stemWords": {
+        "p10": 13,
+        "median": 13,
+        "p90": 14
+      },
+      "choiceWords": {
+        "p10": 14,
+        "median": 21,
+        "p90": 26
+      },
+      "gridInShare": 0.0
+    },
+    {
+      "domain": "Expression of Ideas",
+      "skill": "Transitions",
+      "section": "reading-writing",
+      "count": 194,
+      "share": 0.076,
+      "difficultyMix": {
+        "Hard": 0.211,
+        "Easy": 0.412,
+        "Medium": 0.376
+      },
+      "passageWords": {
+        "p10": 40,
+        "median": 51,
+        "p90": 61
+      },
+      "stemWords": {
+        "p10": 10,
+        "median": 10,
+        "p90": 10
+      },
+      "choiceWords": {
+        "p10": 1,
+        "median": 2,
+        "p90": 3
+      },
+      "gridInShare": 0.0
+    },
+    {
+      "domain": "Algebra",
+      "skill": "Linear functions",
+      "section": "math",
+      "count": 163,
+      "share": 0.0638,
+      "difficultyMix": {
+        "Easy": 0.485,
+        "Hard": 0.178,
+        "Medium": 0.337
+      },
+      "passageWords": {
+        "p10": 5,
+        "median": 19,
+        "p90": 79
+      },
+      "stemWords": {
+        "p10": 4,
+        "median": 8,
+        "p90": 17
+      },
+      "choiceWords": {
+        "p10": 1,
+        "median": 10,
+        "p90": 17
+      },
+      "gridInShare": 0.632
+    },
+    {
+      "domain": "Advanced Math",
+      "skill": "Nonlinear equations in one variable",
+      "section": "math",
+      "count": 163,
+      "share": 0.0638,
+      "difficultyMix": {
+        "Medium": 0.356,
+        "Easy": 0.264,
+        "Hard": 0.38
+      },
+      "passageWords": {
+        "p10": 8,
+        "median": 20,
+        "p90": 122
+      },
+      "stemWords": {
+        "p10": 4,
+        "median": 7,
+        "p90": 13
+      },
+      "choiceWords": {
+        "p10": 1,
+        "median": 1,
+        "p90": 2
+      },
+      "gridInShare": 0.552
+    },
+    {
+      "domain": "Craft and Structure",
+      "skill": "Text Structure and Purpose",
+      "section": "reading-writing",
+      "count": 149,
+      "share": 0.0583,
+      "difficultyMix": {
+        "Hard": 0.282,
+        "Easy": 0.342,
+        "Medium": 0.376
+      },
+      "passageWords": {
+        "p10": 65,
+        "median": 83,
+        "p90": 107
+      },
+      "stemWords": {
+        "p10": 8,
+        "median": 9,
+        "p90": 13
+      },
+      "choiceWords": {
+        "p10": 10,
+        "median": 16,
+        "p90": 24
+      },
+      "gridInShare": 0.0
+    },
+    {
+      "domain": "Information and Ideas",
+      "skill": "Inferences",
+      "section": "reading-writing",
+      "count": 140,
+      "share": 0.0548,
+      "difficultyMix": {
+        "Hard": 0.514,
+        "Medium": 0.35,
+        "Easy": 0.136
+      },
+      "passageWords": {
+        "p10": 50,
+        "median": 75,
+        "p90": 94
+      },
+      "stemWords": {
+        "p10": 12,
+        "median": 18,
+        "p90": 38
+      },
+      "choiceWords": {
+        "p10": 10,
+        "median": 17,
+        "p90": 24
+      },
+      "gridInShare": 0.0
+    },
+    {
+      "domain": "Information and Ideas",
+      "skill": "Central Ide as and Details",
+      "section": "reading-writing",
+      "count": 138,
+      "share": 0.054,
+      "difficultyMix": {
+        "Medium": 0.377,
+        "Hard": 0.326,
+        "Easy": 0.297
+      },
+      "passageWords": {
+        "p10": 66,
+        "median": 80,
+        "p90": 108
+      },
+      "stemWords": {
+        "p10": 8,
+        "median": 10,
+        "p90": 16
+      },
+      "choiceWords": {
+        "p10": 9,
+        "median": 17,
+        "p90": 24
+      },
+      "gridInShare": 0.0
+    },
+    {
+      "domain": "Algebra",
+      "skill": "Systems of two linear equations in two variables",
+      "section": "math",
+      "count": 123,
+      "share": 0.0482,
+      "difficultyMix": {
+        "Hard": 0.341,
+        "Medium": 0.358,
+        "Easy": 0.301
+      },
+      "passageWords": {
+        "p10": 1,
+        "median": 18,
+        "p90": 118
+      },
+      "stemWords": {
+        "p10": 4,
+        "median": 8,
+        "p90": 19
+      },
+      "choiceWords": {
+        "p10": 1,
+        "median": 1,
+        "p90": 2
+      },
+      "gridInShare": 0.585
+    },
+    {
+      "domain": "Advanced Math",
+      "skill": "Equivalent expressions",
+      "section": "math",
+      "count": 114,
+      "share": 0.0446,
+      "difficultyMix": {
+        "Easy": 0.368,
+        "Medium": 0.342,
+        "Hard": 0.289
+      },
+      "passageWords": {
+        "p10": 8,
+        "median": 30,
+        "p90": 107
+      },
+      "stemWords": {
+        "p10": 4,
+        "median": 4,
+        "p90": 9
+      },
+      "choiceWords": {
+        "p10": 1,
+        "median": 1,
+        "p90": 3
+      },
+      "gridInShare": 0.772
+    },
+    {
+      "domain": "Algebra",
+      "skill": "Linear inequalities in one or two variables",
+      "section": "math",
+      "count": 77,
+      "share": 0.0301,
+      "difficultyMix": {
+        "Medium": 0.39,
+        "Easy": 0.351,
+        "Hard": 0.26
+      },
+      "passageWords": {
+        "p10": 10,
+        "median": 26,
+        "p90": 92
+      },
+      "stemWords": {
+        "p10": 7,
+        "median": 17,
+        "p90": 22
+      },
+      "choiceWords": {
+        "p10": 1,
+        "median": 3,
+        "p90": 17
+      },
+      "gridInShare": 0.753
+    },
+    {
+      "domain": "Craft and Structure",
+      "skill": "Cross-Text Connections",
+      "section": "reading-writing",
+      "count": 61,
+      "share": 0.0239,
+      "difficultyMix": {
+        "Easy": 0.153,
+        "Medium": 0.407,
+        "Hard": 0.441
+      },
+      "passageWords": {
+        "p10": 116,
+        "median": 129,
+        "p90": 139
+      },
+      "stemWords": {
+        "p10": 12,
+        "median": 17,
+        "p90": 22
+      },
+      "choiceWords": {
+        "p10": 12,
+        "median": 21,
+        "p90": 26
+      },
+      "gridInShare": 0.0
+    }
+  ],
+  "stemTemplates": [
+    {
+      "stem": "Which choice completes the text with the most logical and precise word or phrase?",
+      "count": 216
+    },
+    {
+      "stem": "Which choice completes the text with the most logical transition?",
+      "count": 189
+    },
+    {
+      "stem": "Whatis the value of ?",
+      "count": 153
+    },
+    {
+      "stem": "Which choice most effectively uses relevant information from the notes to accomplish this goal?",
+      "count": 78
+    },
+    {
+      "stem": "Which choice best states the ma in idea of the text?",
+      "count": 51
+    },
+    {
+      "stem": "Which choice best states the ma in purpose of thetext?",
+      "count": 44
+    },
+    {
+      "stem": "Which expressionis equivalent to ?",
+      "count": 40
+    },
+    {
+      "stem": "If , whatis the value of ?",
+      "count": 38
+    },
+    {
+      "stem": "Which choice best describes the overall structure of the text?",
+      "count": 27
+    },
+    {
+      "stem": "Which choice best describes the function of the und erlined portion in the textasa whole?",
+      "count": 19
+    },
+    {
+      "stem": "Which choice best describes the function of the und erlined sentence in the textasa whole?",
+      "count": 19
+    },
+    {
+      "stem": "Which equation defines ?",
+      "count": 18
+    },
+    {
+      "stem": "Which equation correctly expresses in terms of and ?",
+      "count": 16
+    },
+    {
+      "stem": "Whatis the slope of line ?",
+      "count": 15
+    }
+  ]
+}
