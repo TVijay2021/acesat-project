@@ -7,6 +7,7 @@ import { LedgerTab } from "@/components/LedgerTab";
 import { Lighthouse } from "@/components/Lighthouse";
 import { ProgressTab } from "@/components/ProgressTab";
 import { QuestionRunner } from "@/components/QuestionRunner";
+import { SyncOverlay } from "@/components/SyncOverlay";
 import { TrainTab } from "@/components/TrainTab";
 import { BeaconProvider, nextSessionOf, useBeacon } from "@/lib/store";
 
@@ -76,6 +77,8 @@ function App() {
           onExit={() => setActiveSessionId(null)}
         />
       )}
+
+      <SyncOverlay />
     </div>
   );
 }

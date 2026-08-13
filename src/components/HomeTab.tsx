@@ -5,33 +5,53 @@ import { Button, Card, Eyebrow } from "./ui";
 import { RouteChart } from "./RouteChart";
 
 export function HomeTab({ onStart }: { onStart: () => void }) {
-  const { online, route, sessions, decisions, setTab } = useBeacon();
+  const { online, route, sessions, decisions, attempts, setTab, startSync } =
+    useBeacon();
   const next = nextSessionOf(sessions);
   const remaining = sessions.filter((s) => s.completedAt === null).length;
   const pending = decisions.find((d) => d.outcome === "pending");
+  const unsynced = attempts.filter((a) => !a.synced).length;
 
   return (
     <div className="space-y-4">
       {/* Connectivity is the first thing the student sees, and offline is
           stated as a capability rather than a failure. */}
-      <Card className="space-y-1">
-        <div className="flex items-center gap-2">
-          <span
-            aria-hidden
-            className="h-2 w-2 shrink-0 rounded-full"
-            style={{ background: online ? "var(--seafoam)" : "var(--amber)" }}
-          />
-          <p className="text-[15px] font-semibold">
-            {online ? "Beacon connected" : "You're offline"}
+      <Card className="space-y-3">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span
+              aria-hidden
+              className="h-2 w-2 shrink-0 rounded-full"
+              style={{ background: online ? "var(--seafoam)" : "var(--amber)" }}
+            />
+            <p className="text-[15px] font-semibold">
+              {online ? "Beacon connected" : "You're offline"}
+            </p>
+          </div>
+          <p className="text-ink-muted text-sm">
+            {online
+              ? remaining > 0
+                ? "Your next training route is ready."
+                : "Route complete. Beacon will pack a new one."
+              : `${remaining} training ${remaining === 1 ? "session is" : "sessions are"} ready to go.`}
           </p>
         </div>
-        <p className="text-ink-muted text-sm">
-          {online
-            ? remaining > 0
-              ? "Your next training route is ready."
-              : "Route complete. Beacon will pack a new one."
-            : `${remaining} training ${remaining === 1 ? "session is" : "sessions are"} ready to go.`}
-        </p>
+
+        {online ? (
+          <Button variant="quiet" onClick={startSync}>
+            {unsynced > 0
+              ? `Check in with Beacon · ${unsynced} new`
+              : "Check in with Beacon"}
+          </Button>
+        ) : (
+          unsynced > 0 && (
+            <p className="text-ink-faint text-xs">
+              {unsynced} answered {unsynced === 1 ? "question" : "questions"}{" "}
+              saved. Beacon will review {unsynced === 1 ? "it" : "them"} on your
+              next connection.
+            </p>
+          )
+        )}
       </Card>
 
       {route ? (
