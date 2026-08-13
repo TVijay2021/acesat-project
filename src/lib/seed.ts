@@ -60,6 +60,27 @@ export async function seedIfEmpty(): Promise<void> {
     log(q, true, 46_000);
   }
 
+  // Offline training the student did *after* Beacon's last decision. These are
+  // what the next check-in grades that prediction against — without them the
+  // first sync has no new evidence and the ledger stays pending, which hides
+  // the whole point of the product on the first screen a judge touches.
+  for (const [i, q] of byDomain("Algebra").entries()) {
+    clock = now - 1.5 * DAY + i * 5 * 60_000;
+    attempts.push({
+      questionId: q.id,
+      sessionId: "sess-1",
+      response: i === 4 ? wrongAnswer(q) : q.answer,
+      correct: i !== 4,
+      // Faster than the 88s baseline, and accuracy holds — so the prediction
+      // confirms rather than tripping the accuracy guard.
+      elapsedMs: 69_000 + i * 1_500,
+      confidence: "sure",
+      mistakeReason: null,
+      answeredAt: clock,
+      synced: false,
+    });
+  }
+
   await db.attempts.bulkAdd(attempts);
   await db.decisions.bulkPut(seedDecisions(now));
 
