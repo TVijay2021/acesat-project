@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Sora, Work_Sans } from "next/font/google";
+import { ServiceWorker } from "@/components/ServiceWorker";
 import "./globals.css";
 
 const sora = Sora({
@@ -39,7 +40,10 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${sora.variable} ${workSans.variable}`}>
-      <body className="font-sans min-h-dvh">{children}</body>
+      <body className="font-sans min-h-dvh">
+        {children}
+        <ServiceWorker />
+      </body>
     </html>
   );
 }
