@@ -10,6 +10,7 @@ import {
 } from "react";
 import { currentRoute, db, ledger, sessionsForRoute } from "./db";
 import { seedIfEmpty } from "./seed";
+import { runSync, SYNC_STAGES, type SyncSummary } from "./sync";
 import type {
   Attempt,
   Confidence,
@@ -38,7 +39,16 @@ interface BeaconState {
   recordAttempt: (attempt: Omit<Attempt, "id">) => Promise<void>;
   completeSession: (sessionId: string) => Promise<void>;
   refresh: () => Promise<void>;
+  sync: SyncState;
+  startSync: () => Promise<void>;
+  dismissSync: () => void;
 }
+
+export type SyncState =
+  | { status: "idle" }
+  | { status: "running"; stage: number }
+  | { status: "done"; summary: SyncSummary }
+  | { status: "failed" };
 
 const BeaconContext = createContext<BeaconState | null>(null);
 
@@ -108,6 +118,32 @@ export function BeaconProvider({ children }: { children: React.ReactNode }) {
     [refresh]
   );
 
+  const [sync, setSync] = useState<SyncState>({ status: "idle" });
+
+  const startSync = useCallback(async () => {
+    setSync({ status: "running", stage: 0 });
+
+    // The stages are paced so the student can read them. The request runs in
+    // parallel, so a fast network still shows the full check-in sequence and a
+    // slow one simply holds on the last stage.
+    const paced = (async () => {
+      for (let stage = 1; stage < SYNC_STAGES.length; stage++) {
+        await new Promise((resolve) => setTimeout(resolve, 700));
+        setSync({ status: "running", stage });
+      }
+    })();
+
+    try {
+      const [summary] = await Promise.all([runSync(attempts, decisions), paced]);
+      await refresh();
+      setSync({ status: "done", summary });
+    } catch {
+      setSync({ status: "failed" });
+    }
+  }, [attempts, decisions, refresh]);
+
+  const dismissSync = useCallback(() => setSync({ status: "idle" }), []);
+
   const value = useMemo<BeaconState>(
     () => ({
       ready,
@@ -124,6 +160,9 @@ export function BeaconProvider({ children }: { children: React.ReactNode }) {
       recordAttempt,
       completeSession,
       refresh,
+      sync,
+      startSync,
+      dismissSync,
     }),
     [
       ready,
@@ -138,6 +177,9 @@ export function BeaconProvider({ children }: { children: React.ReactNode }) {
       recordAttempt,
       completeSession,
       refresh,
+      sync,
+      startSync,
+      dismissSync,
     ]
   );
 
