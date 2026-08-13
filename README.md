@@ -138,7 +138,7 @@ Without it, everything still works.
 ## Question bank
 
 161 questions, all original. Nothing in this repository is reproduced from
-College Board or any other publisher — see [Content and licensing](#content-and-licensing).
+College Board or any other publisher.
 
 `npm run seed` regenerates `src/data/questions.generated.json` from two sources
 and fails loudly rather than shipping a thin or malformed bank.
@@ -184,19 +184,10 @@ Every question here is original to this project. The math items are computed
 from templates written for this repository; the reading items were authored for
 it, over passages written for it.
 
-This is a deliberate constraint rather than an accident. College Board's
-publicly released sample questions and its Educator Question Bank are both ©
-College Board, and the licence covering the question bank permits classroom
-teaching and internal reporting — not reproduction, redistribution, or posting
-online. An app that is hosted, demoed, and committed to a public repository does
-all three. "Freely accessible" is not a licence, and the absence of a copyright
-notice on an export grants nothing: protection has been automatic since 1989.
-
 The calibration profile is derived from published question banks but contains
 only unprotected facts — counts, distributions, length bands, and standardised
 stem formats. No passage, answer choice, or rationale from any third party
-appears in this repository. Facts and formats are not copyrightable; expression
-is, and none of it is here.
+appears in this repository.
 
 ## Accessibility
 
