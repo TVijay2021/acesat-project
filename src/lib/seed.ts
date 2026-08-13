@@ -1,10 +1,52 @@
 import generatedBank from "../data/questions.generated.json";
 import { db } from "./db";
-import type { Attempt, Decision, Question, Route, TrainingSession } from "./types";
+import { suggestTip } from "./agent/tip";
+import type {
+  Attempt,
+  Decision,
+  MistakeReason,
+  Question,
+  Route,
+  TrainingSession,
+} from "./types";
 
 const allQuestions = generatedBank.questions as Question[];
 
 const DAY = 86_400_000;
+
+/**
+ * Identifies the bank this database was seeded against.
+ *
+ * Routes, sessions, and attempts all reference questions by id. A build that
+ * ships a different bank leaves a previously seeded database pointing at ids
+ * that no longer exist, and the student meets that as "this question isn't
+ * available offline yet" on a question they cannot skip. So the fingerprint is
+ * checked on every load, not just when the database is empty.
+ */
+const BANK_FINGERPRINT = [
+  allQuestions.length,
+  allQuestions[0]?.id ?? "none",
+  allQuestions[allQuestions.length - 1]?.id ?? "none",
+].join(":") + ":v2";
+
+const FINGERPRINT_KEY = "beacon.bank";
+
+function readFingerprint(): string | null {
+  try {
+    return localStorage.getItem(FINGERPRINT_KEY);
+  } catch {
+    // Private mode or blocked storage: treat as unknown and reseed.
+    return null;
+  }
+}
+
+function writeFingerprint(): void {
+  try {
+    localStorage.setItem(FINGERPRINT_KEY, BANK_FINGERPRINT);
+  } catch {
+    // Not fatal — the app works, it just reseeds again next load.
+  }
+}
 
 /**
  * Seeds a student with a history worth reasoning about. Without this the first
@@ -16,7 +58,27 @@ const DAY = 86_400_000;
  */
 export async function seedIfEmpty(): Promise<void> {
   const existing = await db.questions.count();
-  if (existing > 0) return;
+  if (existing > 0 && readFingerprint() === BANK_FINGERPRINT) return;
+
+  if (existing > 0) {
+    // Rebuild rather than merge. Attempts, decisions, and packed routes all
+    // point at question ids from the previous bank, and a half-migrated
+    // database fails in more confusing ways than a fresh one.
+    await db.transaction(
+      "rw",
+      [db.questions, db.attempts, db.sessions, db.routes, db.decisions, db.cards],
+      async () => {
+        await Promise.all([
+          db.questions.clear(),
+          db.attempts.clear(),
+          db.sessions.clear(),
+          db.routes.clear(),
+          db.decisions.clear(),
+          db.cards.clear(),
+        ]);
+      }
+    );
+  }
 
   await db.questions.bulkPut(allQuestions);
 
@@ -24,8 +86,21 @@ export async function seedIfEmpty(): Promise<void> {
   const attempts: Attempt[] = [];
   let clock = now - 14 * DAY;
 
+  // Rotated so the Review tab opens on a real spread of reasons rather than
+  // one repeated label, and so "what keeps catching you" has something to say.
+  const REASONS: MistakeReason[] = [
+    "rushed",
+    "misread",
+    "concept",
+    "careless",
+    "overthought",
+    "wrong-strategy",
+  ];
+  let missCount = 0;
+
   function log(question: Question, correct: boolean, elapsedMs: number) {
     clock += 4 * 60_000;
+    const reason = correct ? null : REASONS[missCount++ % REASONS.length];
     attempts.push({
       questionId: question.id,
       sessionId: `history-${Math.floor((now - clock) / DAY)}`,
@@ -33,7 +108,9 @@ export async function seedIfEmpty(): Promise<void> {
       correct,
       elapsedMs,
       confidence: correct ? "sure" : "unsure",
-      mistakeReason: correct ? null : "rushed",
+      mistakeReason: reason,
+      // The note is the point of the log, so seeded misses carry one too.
+      note: reason ? suggestTip(question, reason) : undefined,
       answeredAt: clock,
       synced: true,
     });
@@ -77,7 +154,8 @@ export async function seedIfEmpty(): Promise<void> {
       // confirms rather than tripping the accuracy guard.
       elapsedMs: 69_000 + i * 1_500,
       confidence: "sure",
-      mistakeReason: null,
+      mistakeReason: i === 4 ? "careless" : null,
+      note: i === 4 ? suggestTip(q, "careless") : undefined,
       answeredAt: clock,
       synced: false,
     });
@@ -89,6 +167,8 @@ export async function seedIfEmpty(): Promise<void> {
   const route = seedRoute(now);
   await db.routes.put(route);
   await db.sessions.bulkPut(seedSessions(route, now));
+
+  writeFingerprint();
 }
 
 function wrongAnswer(question: Question): string {

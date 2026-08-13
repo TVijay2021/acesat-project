@@ -44,6 +44,12 @@ export interface Attempt {
   elapsedMs: number;
   confidence: Confidence;
   mistakeReason: MistakeReason | null;
+  /**
+   * The student's note to their future self, written straight after getting it
+   * wrong. Beacon suggests one; the student can keep it, rewrite it, or clear
+   * it. This is what the Review tab is built from.
+   */
+  note?: string;
   answeredAt: number;
   /** False until a sync has folded this attempt into a decision outcome. */
   synced: boolean;

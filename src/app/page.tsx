@@ -9,7 +9,11 @@ import { ProgressTab } from "@/components/ProgressTab";
 import { QuestionRunner } from "@/components/QuestionRunner";
 import { SyncOverlay } from "@/components/SyncOverlay";
 import { TrainTab } from "@/components/TrainTab";
+import { ReviewTab } from "@/components/ReviewTab";
 import { BeaconProvider, nextSessionOf, useBeacon } from "@/lib/store";
+import { buildPracticeSession } from "@/lib/practice";
+import type { Subject } from "@/lib/subjects";
+import type { TrainingSession } from "@/lib/types";
 
 export default function Page() {
   return (
@@ -20,9 +24,29 @@ export default function Page() {
 }
 
 function App() {
-  const { ready, tab, sessions, online, simulateOffline, setSimulateOffline } =
-    useBeacon();
+  const {
+    ready,
+    tab,
+    sessions,
+    online,
+    simulateOffline,
+    setSimulateOffline,
+    questions,
+    attempts,
+  } = useBeacon();
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  // A subject the student picked themselves. Built on the fly and never
+  // persisted, so it sits outside the packed route without disturbing it.
+  const [practice, setPractice] = useState<TrainingSession | null>(null);
+
+  function startPractice(subject: Subject) {
+    const built = buildPracticeSession(
+      subject,
+      [...questions.values()],
+      attempts
+    );
+    if (built) setPractice(built);
+  }
 
   if (!ready) {
     return (
@@ -61,9 +85,11 @@ function App() {
                 const next = nextSessionOf(sessions);
                 if (next) setActiveSessionId(next.id);
               }}
+              onPractise={startPractice}
             />
           )}
           {tab === "train" && <TrainTab onStart={setActiveSessionId} />}
+          {tab === "review" && <ReviewTab />}
           {tab === "progress" && <ProgressTab />}
           {tab === "beacon" && <LedgerTab />}
         </main>
@@ -75,6 +101,14 @@ function App() {
         <QuestionRunner
           session={activeSession}
           onExit={() => setActiveSessionId(null)}
+        />
+      )}
+
+      {practice && (
+        <QuestionRunner
+          key={practice.id}
+          session={practice}
+          onExit={() => setPractice(null)}
         />
       )}
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useBeacon } from "@/lib/store";
+import { suggestTip } from "@/lib/agent/tip";
 import type { Confidence, MistakeReason, TrainingSession } from "@/lib/types";
 import { Button, Eyebrow } from "./ui";
 
@@ -44,12 +45,15 @@ export function QuestionRunner({
   session: TrainingSession;
   onExit: () => void;
 }) {
-  const { questions, online, recordAttempt, completeSession } = useBeacon();
+  const { questions, online, recordAttempt, updateAttempt, completeSession } =
+    useBeacon();
   const [index, setIndex] = useState(0);
   const [phase, setPhase] = useState<Phase>("answering");
   const [response, setResponse] = useState("");
   const [confidence, setConfidence] = useState<Confidence | null>(null);
   const [reason, setReason] = useState<MistakeReason | null>(null);
+  const [note, setNote] = useState("");
+  const [attemptId, setAttemptId] = useState<number | null>(null);
   const [correctCount, setCorrectCount] = useState(0);
   const startedAt = useRef(Date.now());
 
@@ -79,22 +83,45 @@ export function QuestionRunner({
 
   async function submit() {
     if (!response || !confidence) return;
-    await recordAttempt({
+    const id = await recordAttempt({
       questionId: question!.id,
       sessionId: session.id,
       response,
       correct,
       elapsedMs: Date.now() - startedAt.current,
       confidence,
+      // The reflection is captured on the next screen, once the student can
+      // see what the answer actually was, and attached to this attempt there.
       mistakeReason: null,
       answeredAt: Date.now(),
       synced: false,
     });
-    if (correct) setCorrectCount((n) => n + 1);
+    setAttemptId(id);
+    if (correct) {
+      setCorrectCount((n) => n + 1);
+    } else {
+      setNote(suggestTip(question!, null));
+    }
     setPhase("reviewing");
   }
 
+  /** Chooses a reason and refreshes the suggested note to match it. */
+  function chooseReason(next: MistakeReason) {
+    setReason(next);
+    setNote(suggestTip(question!, next));
+  }
+
   async function advance() {
+    // Save the reflection before moving on. Without this the reason and the
+    // note are collected and then thrown away, and the Review tab has nothing
+    // to show.
+    if (attemptId !== null && !correct) {
+      await updateAttempt(attemptId, {
+        mistakeReason: reason,
+        note: note.trim() || undefined,
+      });
+    }
+
     if (isLast) {
       await completeSession(session.id);
       onExit();
@@ -104,6 +131,8 @@ export function QuestionRunner({
     setResponse("");
     setConfidence(null);
     setReason(null);
+    setNote("");
+    setAttemptId(null);
     setPhase("answering");
   }
 
@@ -266,7 +295,7 @@ export function QuestionRunner({
                     <button
                       key={option.id}
                       type="button"
-                      onClick={() => setReason(option.id)}
+                      onClick={() => chooseReason(option.id)}
                       aria-pressed={reason === option.id}
                       className="border-line min-h-12 rounded-xl border px-3 text-[13px]
                                  leading-snug font-medium"
@@ -284,6 +313,22 @@ export function QuestionRunner({
                       {option.label}
                     </button>
                   ))}
+                </div>
+
+                <div className="mt-4">
+                  <Eyebrow>Note to future you</Eyebrow>
+                  <p className="text-ink-faint mt-1 text-xs">
+                    Beacon drafted this. Keep it, rewrite it, or clear it — it
+                    goes straight to your Review tab.
+                  </p>
+                  <textarea
+                    value={note}
+                    onChange={(event) => setNote(event.target.value)}
+                    rows={3}
+                    aria-label="Note to future you"
+                    className="border-line bg-surface mt-2 w-full resize-none rounded-xl
+                               border p-3 text-[14px] leading-relaxed"
+                  />
                 </div>
               </div>
             )}

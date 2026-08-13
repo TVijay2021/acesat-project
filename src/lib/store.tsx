@@ -21,7 +21,7 @@ import type {
   TrainingSession,
 } from "./types";
 
-export type Tab = "home" | "train" | "progress" | "beacon";
+export type Tab = "home" | "train" | "review" | "progress" | "beacon";
 
 interface BeaconState {
   ready: boolean;
@@ -36,7 +36,9 @@ interface BeaconState {
   /** Demo control: lets a judge toggle connectivity without airplane mode. */
   simulateOffline: boolean;
   setSimulateOffline: (value: boolean) => void;
-  recordAttempt: (attempt: Omit<Attempt, "id">) => Promise<void>;
+  /** Returns the stored id so the reflection can be attached on the next step. */
+  recordAttempt: (attempt: Omit<Attempt, "id">) => Promise<number>;
+  updateAttempt: (id: number, changes: Partial<Attempt>) => Promise<void>;
   completeSession: (sessionId: string) => Promise<void>;
   refresh: () => Promise<void>;
   sync: SyncState;
@@ -104,7 +106,16 @@ export function BeaconProvider({ children }: { children: React.ReactNode }) {
 
   const recordAttempt = useCallback(
     async (attempt: Omit<Attempt, "id">) => {
-      await db.attempts.add(attempt as Attempt);
+      const id = await db.attempts.add(attempt as Attempt);
+      await refresh();
+      return id as number;
+    },
+    [refresh]
+  );
+
+  const updateAttempt = useCallback(
+    async (id: number, changes: Partial<Attempt>) => {
+      await db.attempts.update(id, changes);
       await refresh();
     },
     [refresh]
@@ -158,6 +169,7 @@ export function BeaconProvider({ children }: { children: React.ReactNode }) {
       simulateOffline,
       setSimulateOffline,
       recordAttempt,
+      updateAttempt,
       completeSession,
       refresh,
       sync,
@@ -175,6 +187,7 @@ export function BeaconProvider({ children }: { children: React.ReactNode }) {
       sessions,
       tab,
       recordAttempt,
+      updateAttempt,
       completeSession,
       refresh,
       sync,

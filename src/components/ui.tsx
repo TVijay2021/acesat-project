@@ -3,13 +3,16 @@
 export function Card({
   children,
   className = "",
+  style,
 }: {
   children: React.ReactNode;
   className?: string;
+  style?: React.CSSProperties;
 }) {
   return (
     <section
       className={`border-line bg-surface rounded-2xl border p-5 ${className}`}
+      style={style}
     >
       {children}
     </section>

@@ -6,6 +6,7 @@ import { useBeacon, type Tab } from "@/lib/store";
 const TABS: { id: Tab; label: string }[] = [
   { id: "home", label: "Home" },
   { id: "train", label: "Train" },
+  { id: "review", label: "Review" },
   { id: "progress", label: "Progress" },
   { id: "beacon", label: "Beacon" },
 ];
@@ -38,6 +39,19 @@ function TabIcon({ id }: { id: Tab }) {
             strokeWidth="1.4"
             strokeLinecap="round"
           />
+        </>
+      )}
+      {id === "review" && (
+        // Folded page with a turned corner — the cram sheet.
+        <>
+          <path
+            d="M4 2.5h6.5L14 6v9.5H4z"
+            stroke="currentColor"
+            strokeWidth="1.4"
+            strokeLinejoin="round"
+          />
+          <path d="M10.5 2.5V6H14" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+          <path d="M6.5 10h5M6.5 12.5h3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
         </>
       )}
       {id === "progress" && (
