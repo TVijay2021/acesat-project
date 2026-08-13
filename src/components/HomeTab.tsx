@@ -1,23 +1,43 @@
 "use client";
 
-import { useMemo } from "react";
-import { nextSessionOf, useBeacon } from "@/lib/store";
+import { useMemo, useState } from "react";
+import { useBeacon } from "@/lib/store";
 import { subjectOf, SUBJECT_META, SUBJECTS, type Subject } from "@/lib/subjects";
+import { planForTime, TIME_BUDGETS, type TimeBudget } from "@/lib/timeplan";
+import type { TrainingSession } from "@/lib/types";
 import { Button, Card, Eyebrow } from "./ui";
+import { WhyThis } from "./WhyThis";
 
 export function HomeTab({
-  onStart,
+  onStartSession,
   onPractise,
+  onOpenCoaching,
 }: {
-  onStart: () => void;
+  onStartSession: (session: TrainingSession) => void;
   onPractise: (subject: Subject) => void;
+  onOpenCoaching: () => void;
 }) {
-  const { online, route, sessions, decisions, attempts, questions, setTab, startSync } =
-    useBeacon();
-  const next = nextSessionOf(sessions);
-  const remaining = sessions.filter((s) => s.completedAt === null).length;
+  const {
+    online,
+    route,
+    sessions,
+    decisions,
+    attempts,
+    questions,
+    setTab,
+    startSync,
+  } = useBeacon();
+
+  const [budget, setBudget] = useState<TimeBudget>(20);
+
+  const plan = useMemo(
+    () => planForTime(budget, sessions, decisions, attempts, questions),
+    [budget, sessions, decisions, attempts, questions]
+  );
+
   const pending = decisions.find((d) => d.outcome === "pending");
   const unsynced = attempts.filter((a) => !a.synced).length;
+  const remaining = sessions.filter((s) => s.completedAt === null).length;
 
   // Per-subject accuracy, so each card says something true about the student
   // rather than being a decorative button.
@@ -37,21 +57,20 @@ export function HomeTab({
     return tally;
   }, [attempts, questions]);
 
-  // Which subject the recommendation actually drills. Taken from the questions
-  // in the block rather than the focus label, since a label like "Timing under
-  // pressure" names a habit and not a subject.
+  // Which subject the recommendation actually drills, taken from its questions
+  // rather than the focus label — "Timing under pressure" names a habit.
   const recommendedSubject: Subject | null = useMemo(() => {
-    if (!next) return null;
+    const first = plan.oneThing?.session ?? plan.blocks[0];
+    if (!first) return null;
     const counts = new Map<Subject, number>();
-    for (const id of next.questionIds) {
+    for (const id of first.questionIds) {
       const question = questions.get(id);
       if (!question) continue;
       const subject = subjectOf(question.domain);
       counts.set(subject, (counts.get(subject) ?? 0) + 1);
     }
-    const top = [...counts.entries()].sort((a, b) => b[1] - a[1])[0];
-    return top ? top[0] : null;
-  }, [next, questions]);
+    return [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+  }, [plan, questions]);
 
   return (
     <div className="space-y-5">
@@ -82,8 +101,34 @@ export function HomeTab({
         )}
       </div>
 
-      {/* ── Recommended ─────────────────────────────────────────────────── */}
-      {route && next ? (
+      {/* ── How long have you got? ──────────────────────────────────────── */}
+      <div>
+        <Eyebrow>How much time do you have?</Eyebrow>
+        <div className="mt-2 flex gap-2">
+          {TIME_BUDGETS.map((option) => {
+            const active = budget === option.value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setBudget(option.value)}
+                aria-pressed={active}
+                className="border-line min-h-10 flex-1 rounded-xl border text-[13px] font-semibold"
+                style={{
+                  background: active ? "var(--amber)" : "var(--surface)",
+                  color: active ? "var(--bg-deep)" : "var(--text-muted)",
+                  borderColor: active ? "var(--amber)" : "var(--border)",
+                }}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── One thing, or a plan ────────────────────────────────────────── */}
+      {plan.oneThing ? (
         <Card
           className="space-y-4"
           style={{
@@ -91,29 +136,70 @@ export function HomeTab({
               "linear-gradient(180deg, color-mix(in oklch, var(--amber) 9%, var(--surface)), var(--surface))",
           }}
         >
-          <div className="flex items-center gap-2">
-            <Eyebrow>Recommended for you</Eyebrow>
+          <Eyebrow>If you only do one thing today</Eyebrow>
+          <div className="space-y-1.5">
+            <h2 className="font-display text-[22px] leading-tight font-semibold">
+              {plan.oneThing.headline}
+            </h2>
+            <p className="text-ink-muted text-sm leading-relaxed">
+              {plan.oneThing.reason}
+            </p>
           </div>
+          <Button onClick={() => onStartSession(plan.oneThing!.session)}>
+            Start · {plan.oneThing.minutes} min
+          </Button>
+          <WhyThis />
+        </Card>
+      ) : plan.blocks.length > 0 ? (
+        <Card
+          className="space-y-4"
+          style={{
+            background:
+              "linear-gradient(180deg, color-mix(in oklch, var(--amber) 9%, var(--surface)), var(--surface))",
+          }}
+        >
+          <Eyebrow>Recommended for you</Eyebrow>
 
           <div className="space-y-1.5">
             <h2 className="font-display text-[22px] leading-tight font-semibold">
-              {next.title}
+              {plan.blocks[0].title}
             </h2>
-            <p className="text-ink-muted text-sm leading-relaxed">{next.intent}</p>
+            <p className="text-ink-muted text-sm leading-relaxed">
+              {plan.blocks[0].intent}
+            </p>
           </div>
 
-          <p className="text-ink-muted border-line border-l-2 pl-3 text-[13px] leading-relaxed"
-             style={{ borderColor: "var(--amber)" }}>
-            {route.rationale}
-          </p>
-
-          <Button onClick={onStart}>
-            Start · {next.estimatedMinutes} min · {next.questionIds.length} questions
+          <Button onClick={() => onStartSession(plan.blocks[0])}>
+            Start · {plan.blocks[0].estimatedMinutes} min ·{" "}
+            {plan.blocks[0].questionIds.length} questions
           </Button>
 
+          {plan.blocks.length > 1 && (
+            <div className="space-y-1.5">
+              <p className="text-ink-faint text-xs">
+                Then, if the time holds:
+              </p>
+              <ul className="space-y-1">
+                {plan.blocks.slice(1).map((block) => (
+                  <li
+                    key={block.id}
+                    className="text-ink-muted flex items-baseline justify-between gap-3 text-[13px]"
+                  >
+                    <span className="min-w-0 truncate">{block.title}</span>
+                    <span className="tabular shrink-0">
+                      {block.estimatedMinutes} min
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <p className="text-ink-faint text-center text-xs">
-            {remaining} of {sessions.length} sessions left in this route
+            {plan.totalMinutes} min planned · {remaining} left in this route
           </p>
+
+          <WhyThis />
         </Card>
       ) : (
         <Card className="space-y-2">
@@ -213,7 +299,14 @@ export function HomeTab({
           </p>
         </button>
       )}
+
+      <button
+        type="button"
+        onClick={onOpenCoaching}
+        className="text-ink-faint min-h-11 w-full text-center text-[13px] font-semibold"
+      >
+        Adjust how Beacon talks to you →
+      </button>
     </div>
   );
 }
-

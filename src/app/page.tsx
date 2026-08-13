@@ -2,16 +2,19 @@
 
 import { useState } from "react";
 import { BottomNav } from "@/components/BottomNav";
+import { CoachingSheet } from "@/components/CoachingSheet";
 import { HomeTab } from "@/components/HomeTab";
 import { LedgerTab } from "@/components/LedgerTab";
 import { Lighthouse } from "@/components/Lighthouse";
+import { Onboarding } from "@/components/Onboarding";
 import { ProgressTab } from "@/components/ProgressTab";
 import { QuestionRunner } from "@/components/QuestionRunner";
+import { ReviewTab } from "@/components/ReviewTab";
 import { SyncOverlay } from "@/components/SyncOverlay";
 import { TrainTab } from "@/components/TrainTab";
-import { ReviewTab } from "@/components/ReviewTab";
-import { BeaconProvider, nextSessionOf, useBeacon } from "@/lib/store";
+import { Button } from "@/components/ui";
 import { buildPracticeSession } from "@/lib/practice";
+import { BeaconProvider, useBeacon } from "@/lib/store";
 import type { Subject } from "@/lib/subjects";
 import type { TrainingSession } from "@/lib/types";
 
@@ -33,20 +36,14 @@ function App() {
     setSimulateOffline,
     questions,
     attempts,
+    profile,
+    setPreferences,
   } = useBeacon();
-  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
-  // A subject the student picked themselves. Built on the fly and never
-  // persisted, so it sits outside the packed route without disturbing it.
-  const [practice, setPractice] = useState<TrainingSession | null>(null);
 
-  function startPractice(subject: Subject) {
-    const built = buildPracticeSession(
-      subject,
-      [...questions.values()],
-      attempts
-    );
-    if (built) setPractice(built);
-  }
+  // One slot for whatever is being worked on, whether that is a packed block,
+  // a block trimmed to fit the time available, or a subject the student chose.
+  const [activeSession, setActiveSession] = useState<TrainingSession | null>(null);
+  const [coachingOpen, setCoachingOpen] = useState(false);
 
   if (!ready) {
     return (
@@ -57,7 +54,16 @@ function App() {
     );
   }
 
-  const activeSession = sessions.find((s) => s.id === activeSessionId) ?? null;
+  if (!profile.onboarded) return <Onboarding />;
+
+  function startPractice(subject: Subject) {
+    const built = buildPracticeSession(
+      subject,
+      [...questions.values()],
+      attempts
+    );
+    if (built) setActiveSession(built);
+  }
 
   return (
     <div className="flex min-h-dvh flex-col sm:flex-col-reverse">
@@ -81,14 +87,18 @@ function App() {
         <main className="mx-auto max-w-2xl px-5 pb-8">
           {tab === "home" && (
             <HomeTab
-              onStart={() => {
-                const next = nextSessionOf(sessions);
-                if (next) setActiveSessionId(next.id);
-              }}
+              onStartSession={setActiveSession}
               onPractise={startPractice}
+              onOpenCoaching={() => setCoachingOpen(true)}
             />
           )}
-          {tab === "train" && <TrainTab onStart={setActiveSessionId} />}
+          {tab === "train" && (
+            <TrainTab
+              onStart={(id) =>
+                setActiveSession(sessions.find((s) => s.id === id) ?? null)
+              }
+            />
+          )}
           {tab === "review" && <ReviewTab />}
           {tab === "progress" && <ProgressTab />}
           {tab === "beacon" && <LedgerTab />}
@@ -99,17 +109,30 @@ function App() {
 
       {activeSession && (
         <QuestionRunner
+          key={activeSession.id}
           session={activeSession}
-          onExit={() => setActiveSessionId(null)}
+          onExit={() => setActiveSession(null)}
         />
       )}
 
-      {practice && (
-        <QuestionRunner
-          key={practice.id}
-          session={practice}
-          onExit={() => setPractice(null)}
-        />
+      {coachingOpen && (
+        <div className="bg-bg fixed inset-0 z-30 overflow-y-auto">
+          <div className="mx-auto max-w-md space-y-6 px-5 pt-6 pb-16">
+            <div className="space-y-1.5">
+              <h2 className="font-display text-xl font-semibold">
+                How Beacon talks to you
+              </h2>
+              <p className="text-ink-muted text-sm leading-relaxed">
+                This shapes the notes Beacon writes after a missed question.
+              </p>
+            </div>
+            <CoachingSheet
+              preferences={profile.preferences}
+              onChange={setPreferences}
+            />
+            <Button onClick={() => setCoachingOpen(false)}>Done</Button>
+          </div>
+        </div>
       )}
 
       <SyncOverlay />

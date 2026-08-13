@@ -9,15 +9,19 @@ import {
   useState,
 } from "react";
 import { currentRoute, db, ledger, sessionsForRoute } from "./db";
+import { loadProfile, saveProfile } from "./profile";
 import { seedIfEmpty } from "./seed";
 import { runSync, SYNC_STAGES, type SyncSummary } from "./sync";
 import type {
   Attempt,
+  CoachingPreferences,
   Confidence,
   Decision,
+  LearnerProfile,
   MistakeReason,
   Question,
   Route,
+  StartingPoint,
   TrainingSession,
 } from "./types";
 
@@ -33,6 +37,11 @@ interface BeaconState {
   sessions: TrainingSession[];
   tab: Tab;
   setTab: (tab: Tab) => void;
+  /** Coaching preferences, starting point, and first-run state. */
+  profile: LearnerProfile;
+  setPreferences: (preferences: CoachingPreferences) => void;
+  setStartingPoint: (startingPoint: StartingPoint | null) => void;
+  completeOnboarding: () => void;
   /** Demo control: lets a judge toggle connectivity without airplane mode. */
   simulateOffline: boolean;
   setSimulateOffline: (value: boolean) => void;
@@ -64,6 +73,24 @@ export function BeaconProvider({ children }: { children: React.ReactNode }) {
   const [route, setRoute] = useState<Route | null>(null);
   const [sessions, setSessions] = useState<TrainingSession[]>([]);
   const [tab, setTab] = useState<Tab>("home");
+  // Read once on mount rather than during render, so the server and the first
+  // client render agree and hydration stays quiet.
+  const [profile, setProfile] = useState<LearnerProfile>(() => ({
+    preferences: { length: "balanced", style: "constructive", format: "notes" },
+    startingPoint: null,
+    onboarded: true,
+  }));
+  const [profileReady, setProfileReady] = useState(false);
+
+  useEffect(() => {
+    setProfile(loadProfile());
+    setProfileReady(true);
+  }, []);
+
+  const persist = useCallback((next: LearnerProfile) => {
+    setProfile(next);
+    saveProfile(next);
+  }, []);
 
   const refresh = useCallback(async () => {
     const [allQuestions, allAttempts, allDecisions, activeRoute] =
@@ -129,6 +156,23 @@ export function BeaconProvider({ children }: { children: React.ReactNode }) {
     [refresh]
   );
 
+  const setPreferences = useCallback(
+    (preferences: CoachingPreferences) =>
+      persist({ ...loadProfile(), preferences }),
+    [persist]
+  );
+
+  const setStartingPoint = useCallback(
+    (startingPoint: StartingPoint | null) =>
+      persist({ ...loadProfile(), startingPoint }),
+    [persist]
+  );
+
+  const completeOnboarding = useCallback(
+    () => persist({ ...loadProfile(), onboarded: true }),
+    [persist]
+  );
+
   const [sync, setSync] = useState<SyncState>({ status: "idle" });
 
   const startSync = useCallback(async () => {
@@ -157,8 +201,12 @@ export function BeaconProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo<BeaconState>(
     () => ({
-      ready,
+      ready: ready && profileReady,
       online: navigatorOnline && !simulateOffline,
+      profile,
+      setPreferences,
+      setStartingPoint,
+      completeOnboarding,
       questions,
       attempts,
       decisions,
@@ -178,6 +226,11 @@ export function BeaconProvider({ children }: { children: React.ReactNode }) {
     }),
     [
       ready,
+      profileReady,
+      profile,
+      setPreferences,
+      setStartingPoint,
+      completeOnboarding,
       navigatorOnline,
       simulateOffline,
       questions,

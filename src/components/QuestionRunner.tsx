@@ -45,8 +45,14 @@ export function QuestionRunner({
   session: TrainingSession;
   onExit: () => void;
 }) {
-  const { questions, online, recordAttempt, updateAttempt, completeSession } =
-    useBeacon();
+  const {
+    questions,
+    online,
+    recordAttempt,
+    updateAttempt,
+    completeSession,
+    profile,
+  } = useBeacon();
   const [index, setIndex] = useState(0);
   const [phase, setPhase] = useState<Phase>("answering");
   const [response, setResponse] = useState("");
@@ -100,7 +106,7 @@ export function QuestionRunner({
     if (correct) {
       setCorrectCount((n) => n + 1);
     } else {
-      setNote(suggestTip(question!, null));
+      setNote(suggestTip(question!, null, profile.preferences));
     }
     setPhase("reviewing");
   }
@@ -108,7 +114,7 @@ export function QuestionRunner({
   /** Chooses a reason and refreshes the suggested note to match it. */
   function chooseReason(next: MistakeReason) {
     setReason(next);
-    setNote(suggestTip(question!, next));
+    setNote(suggestTip(question!, next, profile.preferences));
   }
 
   async function advance() {

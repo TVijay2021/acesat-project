@@ -127,6 +127,49 @@ export interface PredictionCheck {
   guardAccuracy?: number;
 }
 
+/** How much Beacon says. */
+export type FeedbackLength = "concise" | "balanced" | "detailed";
+
+/** The register Beacon says it in. */
+export type CoachingStyle =
+  | "encouraging"
+  | "direct"
+  | "constructive"
+  | "socratic";
+
+/** The shape it arrives in. */
+export type FeedbackFormat = "notes" | "bullets" | "steps" | "questions";
+
+export interface CoachingPreferences {
+  length: FeedbackLength;
+  style: CoachingStyle;
+  format: FeedbackFormat;
+}
+
+/**
+ * Where the student was when they started, in their own words.
+ *
+ * Every field is optional and the whole thing is skippable. It exists to give
+ * later progress something to be measured against — never to grade anyone on
+ * the day they arrive.
+ */
+export interface StartingPoint {
+  total: number | null;
+  math: number | null;
+  readingWriting: number | null;
+  /** ISO date (yyyy-mm-dd), if the student knows when they sit the test. */
+  testDate: string | null;
+  targetScore: number | null;
+  recordedAt: number;
+}
+
+export interface LearnerProfile {
+  preferences: CoachingPreferences;
+  startingPoint: StartingPoint | null;
+  /** True once the student has been through (or skipped) the first run. */
+  onboarded: boolean;
+}
+
 /** A short coaching card the student can keep. */
 export interface MemoryCard {
   id: string;

@@ -2,6 +2,7 @@
 
 import { useBeacon } from "@/lib/store";
 import { Card, Eyebrow } from "./ui";
+import { WhyThis } from "./WhyThis";
 
 export function TrainTab({ onStart }: { onStart: (sessionId: string) => void }) {
   const { sessions, online } = useBeacon();
@@ -25,6 +26,10 @@ export function TrainTab({ onStart }: { onStart: (sessionId: string) => void }) 
           {online ? "Synced" : "Available offline"}
         </span>
       </div>
+
+      <Card className="space-y-0 py-4">
+        <WhyThis />
+      </Card>
 
       <ul className="space-y-3">
         {sessions.map((session) => {
