@@ -621,7 +621,7 @@
       "number": 7,
       "domain": "Advanced Math",
       "skill": "Nonlinear functions",
-      "stem": "g (x) = x 2 + 55 What is the minimum value of the given function?",
+      "stem": "g(x) = x² + 55  What is the minimum value of the given function?",
       "choices": [
         {
           "label": "A",
@@ -681,7 +681,7 @@
       "number": 9,
       "domain": "Advanced Math",
       "skill": "Nonlinear equations in one variable and",
-      "stem": "(x − 1)2 = −4 How many distinct real solutions does the given equation have?",
+      "stem": "(x − 1)² = −4  How many distinct real solutions does the given equation have?",
       "choices": [
         {
           "label": "A",

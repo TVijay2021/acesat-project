@@ -157,7 +157,25 @@ function parseBlock(block) {
   };
 }
 
-const parsed = splitQuestions(clean(readFileSync(SOURCE, "utf8"))).map(parseBlock);
+const overrides = JSON.parse(
+  readFileSync(resolve(here, "./notation-overrides.json"), "utf8")
+);
+
+const parsed = splitQuestions(clean(readFileSync(SOURCE, "utf8")))
+  .map(parseBlock)
+  .map((question) => {
+    const stem = overrides.stems[question.id];
+    return stem ? { ...question, stem } : question;
+  });
+
+// An override that no longer matches a question means the source text changed
+// and the correction is silently doing nothing.
+const ids = new Set(parsed.map((q) => q.id));
+const orphaned = Object.keys(overrides.stems).filter((id) => !ids.has(id));
+if (orphaned.length) {
+  console.error(`Overrides target missing questions: ${orphaned.join(", ")}`);
+  process.exit(1);
+}
 
 // Fail loudly rather than shipping a half-parsed bank.
 const broken = parsed.filter(
