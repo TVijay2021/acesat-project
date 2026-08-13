@@ -28,16 +28,73 @@ that prediction in code:
 Beacon records when it was **wrong**, too, and changes approach. That self-check
 is the product.
 
+## What the student sees
+
+Five screens, each answering one question.
+
+**Home — "what should I do right now?"** Opens with *how much time do you have* —
+5, 10, 20, or 30+ minutes — and fits the plan to the answer. Under five minutes
+the plan collapses to a single action:
+
+> **If you only do one thing today**
+> 2 questions on timing under pressure
+> *You are answering Algebra questions at 83% accuracy, but spending 82% longer
+> than your average.*
+
+Below that, Math / Reading / Writing cards carrying live accuracy, so practising
+what you feel like doesn't require waiting for Beacon to agree it's the priority.
+
+**Train — "what's packed?"** The full route, offline and ready.
+
+**Review — "what do I keep getting wrong?"** Every missed question with what you
+put, what was right, why it went wrong, and the note you wrote to your future
+self. Filterable by subject, above a summary of the skills and reasons that keep
+recurring. This is the screen for the night before the test.
+
+**Progress — "where am I?"** Accuracy and pacing per area, above your starting
+point if you gave one.
+
+**Beacon — "was it right?"** The Decision Ledger.
+
+## Personalisation
+
+Beacon adapts how it coaches, not just what it assigns.
+
+**Coaching preferences.** Three choices — how much detail, what tone, what shape
+— set at first run and changeable any time. They drive the notes Beacon writes
+after a missed question: `concise` gives the instruction alone, `socratic` asks
+rather than tells, `bullets` and `step-by-step` change the layout. The settings
+screen previews a real note that rewrites itself as you choose, because a
+preference whose effect you have to imagine doesn't get set honestly.
+
+**Starting point.** An optional first-run step for previous scores, target, and
+test date. Every field is skippable and the framing is a bearing rather than a
+grade — *"Where are you setting out from?"*, never *"your performance"*. Skipping
+costs nothing; Beacon derives everything else from practice.
+
+**Why Beacon chose this.** Every recommendation carries a collapsed explanation
+holding what Beacon observed and what it predicts, linking to the ledger entry
+that will later grade that prediction. It shows the evidence a student can check
+— not a narration of how the choice was reached.
+
 ## Architecture
 
 - **Next.js 15 App Router + TypeScript + Tailwind v4** — no component library,
   no chart library, no state-management library, no animation library.
 - **Dexie (IndexedDB)** — every screen reads from local storage. Training never
-  touches the network.
+  touches the network. Coaching preferences and the starting point live in
+  `localStorage` instead: they are settings rather than learning data, and they
+  must be readable before the database opens so the first screen is already in
+  the student's chosen voice.
 - **Hand-written service worker** — precaches the shell, cache-first for the
   question bank.
 - **One Vercel serverless route** (`/api/sync`) — the only code path that talks
   to the network, and the only place an API key is used.
+
+The stored database records which question bank it was seeded against. A build
+shipping a different bank rebuilds rather than merges, because routes and
+attempts reference questions by id and a half-migrated database surfaces to the
+student as an unanswerable question they cannot skip.
 
 ### Where the intelligence lives
 
@@ -48,12 +105,23 @@ The decision logic is **deterministic TypeScript**, not a model call:
   falsifiable prediction. Interventions that keep missing get demoted, so Beacon
   stops prescribing what demonstrably isn't helping.
 - `src/lib/agent/grade.ts` — grades a past prediction against later attempts.
+- `src/lib/agent/tip.ts` — composes the note to future-you from the mistake
+  reason and the question's own explanation, shaped by coaching preferences.
+- `src/lib/timeplan.ts` — fits blocks to the time available, and reduces the
+  plan to one action when there isn't time for a block. A trimmed block gets its
+  own id, so two questions on the bus don't consume the whole session; the
+  answers still count, since Beacon grades attempts rather than completions.
 
 Claude (Haiku 4.5) is used for one job: rewriting the computed decision into the
 two sentences the student reads. This is a deliberate choice — a model asked
 "did your prediction come true?" will tend to say yes, so the grading stays in
 code where it is reproducible and auditable. **The app runs fully without an API
 key**, falling back to template copy.
+
+The coaching notes are templates for the same reason plus a practical one: they
+are written the instant a question is marked wrong, offline, with no key. The
+student sees a draft already filled in and can keep it, rewrite it, or clear it
+— the point is that a blank box is never the reason the log stays empty.
 
 ## Running it
 
