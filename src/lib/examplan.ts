@@ -64,6 +64,66 @@ export interface ExamPlan {
   verdict: string;
   /** Full-length sittings scheduled between now and test day. */
   practiceTests: PracticeTestPlan;
+  /** Where the student lands on test day at their current rate of work. */
+  projection: Projection | null;
+}
+
+export interface Projection {
+  /** Best current read on where they are, in SAT points. */
+  from: number;
+  /** Where that rate of work lands them on test day. */
+  to: number;
+  target: number | null;
+  /** True when the projection reaches the target. */
+  onTrack: boolean;
+  /** Sessions per week the projection is extrapolating from. */
+  observedPerWeek: number;
+  summary: string;
+}
+
+/**
+ * Projects a test-day score from the rate of work actually observed.
+ *
+ * Extrapolates the student's real recent pace, not the pace the plan asks for
+ * — a projection built on the prescribed schedule would just restate the
+ * target back to them and would be wrong for every student who is behind.
+ *
+ * A measured practice test outranks the self-reported starting score as the
+ * baseline, because it is evidence rather than memory.
+ */
+function project(
+  startingPoint: StartingPoint,
+  exams: ExamRecord[],
+  observedPerWeek: number,
+  weeksLeft: number
+): Projection | null {
+  const latestExam = exams.length
+    ? [...exams].sort((a, b) => b.takenAt - a.takenAt)[0]
+    : null;
+  const from = latestExam?.total ?? startingPoint.total;
+  if (from === null || from === undefined) return null;
+
+  const gained = observedPerWeek * POINTS_PER_SESSION * weeksLeft;
+  // The scale stops at 1600 however well the work is going.
+  const to = Math.min(1600, Math.round((from + gained) / 10) * 10);
+  const target = startingPoint.targetScore;
+  const onTrack = target === null ? true : to >= target;
+
+  const basis = latestExam ? "your last practice test" : "your starting score";
+  let summary: string;
+  if (weeksLeft <= 0) {
+    summary = `Based on ${basis}.`;
+  } else if (observedPerWeek === 0) {
+    summary = `You haven't trained this week, so there's nothing to project from yet. From ${basis} you're at ${from}.`;
+  } else if (target !== null && onTrack) {
+    summary = `Keeping up ${observedPerWeek} ${observedPerWeek === 1 ? "session" : "sessions"} a week puts you at about ${to} by test day, from ${basis}. That clears your ${target} target.`;
+  } else if (target !== null) {
+    summary = `At ${observedPerWeek} ${observedPerWeek === 1 ? "session" : "sessions"} a week you land near ${to}, short of your ${target} target. Closing that gap means more sessions, not different ones.`;
+  } else {
+    summary = `Keeping up ${observedPerWeek} ${observedPerWeek === 1 ? "session" : "sessions"} a week puts you at about ${to} by test day, from ${basis}.`;
+  }
+
+  return { from, to, target, onTrack, observedPerWeek, summary };
 }
 
 export interface PracticeTestPlan {
@@ -164,6 +224,7 @@ export function buildExamPlan(
     onPace: sessionsThisWeek >= sessionsPerWeek,
     verdict: verdictFor(pointsNeeded, weeksLeft, sessionsPerWeek, daysLeft),
     practiceTests: planPracticeTests(daysLeft, exams),
+    projection: project(startingPoint, exams, sessionsThisWeek, weeksLeft),
   };
 }
 
