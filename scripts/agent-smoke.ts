@@ -9,6 +9,9 @@ import { fileURLToPath } from "node:url";
 import { buildPredictionCheck, describe, diagnose } from "../src/lib/agent/decide";
 import { gradeDecision } from "../src/lib/agent/grade";
 import { analyseCalibration } from "../src/lib/agent/calibration";
+import { buildExam } from "../src/lib/exam/build";
+import { routeFor, scaleSection } from "../src/lib/exam/format";
+import { scoreExam, type ExamAnswer } from "../src/lib/exam/result";
 import type { Attempt, Decision, Question } from "../src/lib/types";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -168,3 +171,71 @@ console.log("\nAgent smoke test passed.");
 }
 
 console.log("\nCalibration smoke test passed.");
+
+// ── Full-length adaptive practice test ────────────────────────────────────
+{
+  const blueprint = buildExam(bank.questions);
+  assert.ok(blueprint, "expected the bank to support a sitting");
+  assert.equal(blueprint.openers.length, 2, "one opening module per section");
+
+  // Module 2 must differ by route, or the adaptive step is decorative.
+  for (const section of ["reading-writing", "math"] as const) {
+    const { upper, lower } = blueprint.followers[section];
+    const overlap = upper.questionIds.filter((id) =>
+      lower.questionIds.includes(id)
+    );
+    assert.equal(
+      overlap.length,
+      0,
+      `${section}: harder and easier module 2 must not share questions`
+    );
+  }
+
+  // Routing: 60% of module 1 correct sends the student to the harder module.
+  assert.equal(routeFor(6, 10), "upper");
+  assert.equal(routeFor(5, 10), "lower");
+  assert.equal(routeFor(0, 0), "lower");
+
+  // The easier second module caps the section score, as on the real test.
+  assert.equal(scaleSection(20, 20, "upper"), 800);
+  assert.ok(
+    scaleSection(20, 20, "lower") < 800,
+    "a perfect lower-module score must not reach 800"
+  );
+  assert.equal(scaleSection(0, 20, "upper"), 200, "the scale floors at 200");
+
+  // A blank answer is wrong, and is reported as unanswered rather than hidden.
+  const answers: ExamAnswer[] = blueprint.openers[0].questionIds
+    .slice(0, 6)
+    .map((questionId, i) => ({
+      questionId,
+      section: "reading-writing" as const,
+      moduleIndex: 1 as const,
+      response: i < 4 ? "A" : "",
+      correct: false,
+      elapsedMs: 40_000,
+      ranOutOfTime: i >= 4,
+    }));
+
+  const result = scoreExam(
+    "exam-test",
+    answers,
+    { "reading-writing": "lower", math: "lower" },
+    questions
+  );
+  assert.ok(
+    result.findings.some((f) => f.includes("blank")),
+    "leaving questions blank must be called out"
+  );
+  assert.ok(
+    result.findings.some((f) => f.includes("timer ran out")),
+    "running out of time must be called out"
+  );
+  assert.ok(result.recommendation.length > 0);
+
+  console.log(`\nExam       full sitting: ${blueprint.openers[0].questionIds.length} + ${blueprint.followers["reading-writing"].upper.questionIds.length} R&W, scale ${blueprint.scale.toFixed(2)}`);
+  console.log(`           ${result.findings[0]}`);
+  console.log(`           ${result.recommendation}`);
+}
+
+console.log("\nExam smoke test passed.");
