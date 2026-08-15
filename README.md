@@ -13,20 +13,6 @@ CONNECT → ANALYZE → PLAN → PACK → GO OFFLINE → TRAIN → RETURN → LE
 
 *Submission for the AceSAT Hackathon 2026.*
 
-## Why this is not a chatbot
-
-The defining feature is the **Decision Ledger**. Beacon doesn't just recommend —
-every decision it makes carries a falsifiable prediction, and a later sync grades
-that prediction in code:
-
-| | |
-|---|---|
-| **Decision** | Focus on timing rather than algebra. |
-| **Evidence** | 5 of your last 6 algebra questions were correct, but your median time was 90% above your baseline. |
-| **Action** | Assigned three skip-and-return drills. |
-| **Prediction** | Your pacing will improve without reducing accuracy. |
-| **Outcome** | Confirmed — pacing improved by 25s per question while accuracy held at 83%. |
-
 ## What the student sees
 
 Five screens, each answering one question.
@@ -65,6 +51,20 @@ test date. Skipping costs nothing; Beacon derives everything else from practice.
 holding what Beacon observed and what it predicts, linking to the ledger entry
 that will later grade that prediction. It shows the evidence a student can check
 — not a narration of how the choice was reached.
+
+## Why this is not a chatbot
+
+The defining feature is the **Decision Ledger**. Beacon doesn't just recommend —
+every decision it makes carries a falsifiable prediction, and a later sync grades
+that prediction in code:
+
+| | |
+|---|---|
+| **Decision** | Focus on timing rather than algebra. |
+| **Evidence** | 5 of your last 6 algebra questions were correct, but your median time was 90% above your baseline. |
+| **Action** | Assigned three skip-and-return drills. |
+| **Prediction** | Your pacing will improve without reducing accuracy. |
+| **Outcome** | Confirmed — pacing improved by 25s per question while accuracy held at 83%. |
 
 ## Architecture
 
