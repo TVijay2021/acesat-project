@@ -4,6 +4,7 @@ import { useState } from "react";
 import { calibrate } from "@/lib/agent/decide";
 import { useBeacon } from "@/lib/store";
 import type { Decision } from "@/lib/types";
+import { MemoryCardView } from "./MemoryCardView";
 import { Card, Eyebrow } from "./ui";
 
 const OUTCOME_LABEL = {
@@ -25,6 +26,8 @@ export function LedgerTab() {
           was right.
         </p>
       </div>
+
+      <MemoryCardView />
 
       <Learning decisions={decisions} />
 
