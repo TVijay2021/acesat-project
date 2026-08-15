@@ -8,7 +8,7 @@ reconnect, Beacon checks whether its own advice actually worked and recalibrates
 **The student is the ship. Beacon is the lighthouse.**
 
 ```
-CONNECT → ANALYZE → PLAN → PACK → GO OFFLINE → TRAIN → RETURN → LEARN → RESYNC
+CONNECT  →  ANALYZE  →  PLAN  →  PACK  →  GO OFFLINE  →  PRACTICE  →  RETURN  →  LEARN → RESYNC
 ```
 
 *Submission for the AceSAT Hackathon 2026.*
@@ -75,7 +75,7 @@ that prediction in code:
   `localStorage` instead: they are settings rather than learning data, and they
   must be readable before the database opens so the first screen is already in
   the student's chosen voice.
-- **Hand-written service worker** — precaches the shell, cache-first for the
+- **Service worker** — precaches the shell, cache-first for the
   question bank.
 - **One Vercel serverless route** (`/api/sync`) — the only code path that talks
   to the network, and the only place an API key is used.
@@ -87,8 +87,7 @@ student as an unanswerable question they cannot skip.
 
 ### Where the intelligence lives
 
-The decision logic is **deterministic TypeScript**, not a model call:
-
+The decision logic is written in TypeScript.
 - `src/lib/agent/analyze.ts` — metrics per focus area (accuracy, median time).
 - `src/lib/agent/decide.ts` — ranks weaknesses, picks a focus, and attaches a
   falsifiable prediction. Interventions that keep missing get demoted, so Beacon
@@ -101,11 +100,9 @@ The decision logic is **deterministic TypeScript**, not a model call:
   own id, so two questions on the bus don't consume the whole session; the
   answers still count, since Beacon grades attempts rather than completions.
 
-Claude (Haiku 4.5) is used for one job: rewriting the computed decision into the
-two sentences the student reads. This is a deliberate choice — a model asked
-"did your prediction come true?" will tend to say yes, so the grading stays in
-code where it is reproducible and auditable. **The app can run fully without an API
-key**, falling back to template copy.
+Claude (Haiku 4.5) is used to rewrite the computed decision into the
+two sentences the student reads. **The app can run fully without an API
+key**, falling back on a template copy.
 
 The coaching notes are templates for the same reason plus a practical one: they
 are written the instant a question is marked wrong, offline, with no key. The
@@ -121,7 +118,7 @@ npm run dev
 ```
 
 Set `ANTHROPIC_API_KEY` in `.env.local` to enable Claude-authored explanations.
-Without it, everything still works.
+Without an API key, everything still works.
 
 ## Question bank
 
@@ -145,25 +142,22 @@ Command of Evidence, Central Ideas, Inferences, Text Structure and Purpose,
 Rhetorical Synthesis, Cross-Text Connections, Boundaries, and Form, Structure,
 and Sense.
 
-The build validates both sets: exactly four distinct choices, a key that
-resolves to a real choice and the correct answer
+The build validates both sets: exactly four distinct choices for MCQs, a key that
+resolves to a real choice. The correct answer
 rotated evenly across A–D so no letter is worth guessing.
 
 ### Calibration
 
 `src/data/question-bank-profile.json` holds the format conventions the bank is
-written against — per-skill shares, difficulty mix, and passage, stem, and
-choice length bands. It is measured data: how long a Words in Context passage
+written against (per-skill shares, difficulty mix, and passage, stem, and
+choice length bands). It is measured data: how long a Words in Context passage
 runs (~48 words) against a Cross-Text Connections pair (~129), and which stem
 phrasings are standard. Authored items are written to those bands so the
 practice material matches the shape of the real thing.
 
 ## Accessibility
 
-Built for students on older phones, small screens, and intermittent
-connectivity: offline is a first-class state (never an error),
-both light and dark mode themes, large touch targets, reduced-motion honored,
-and no information conveyed by color alone.
+Beacon can be accessed and run without consistent WiFi connection. This allows students to study anytime and anywhere. The interface also features large touch targets, different lighting modes, and reduced motion to support users.
 
 ## Demos
 > Home - Page
