@@ -49,6 +49,36 @@ export function ExamPlan() {
         </div>
       </div>
 
+      {plan.projection && (
+        <div className="border-line border-t pt-4">
+          <Eyebrow>On pace for</Eyebrow>
+          <div className="mt-1 flex items-baseline gap-3">
+            <p className="tabular font-display text-3xl leading-none font-semibold">
+              {plan.projection.to}
+            </p>
+            {plan.projection.target !== null && (
+              <p
+                className="text-sm font-semibold"
+                style={{
+                  color: plan.projection.onTrack
+                    ? "var(--seafoam)"
+                    : "var(--amber)",
+                }}
+              >
+                {plan.projection.onTrack
+                  ? "clears your target"
+                  : `${plan.projection.target - plan.projection.to} short`}
+              </p>
+            )}
+          </div>
+          {/* The bar shows the journey, not a score out of 1600. */}
+          <ProjectionBar projection={plan.projection} />
+          <p className="text-ink-muted mt-2.5 text-sm leading-relaxed">
+            {plan.projection.summary}
+          </p>
+        </div>
+      )}
+
       <div className="border-line border-t pt-4">
         <Eyebrow>You are here</Eyebrow>
         <p className="font-display mt-1 text-lg font-semibold">
@@ -139,6 +169,51 @@ export function ExamPlan() {
         Change test date or target
       </button>
     </Card>
+  );
+}
+
+/** From current score to projected, with the target marked if there is one. */
+function ProjectionBar({
+  projection,
+}: {
+  projection: NonNullable<import("@/lib/examplan").Projection>;
+}) {
+  // Scaled across the span the student is actually travelling, not 400–1600 —
+  // on the full scale every realistic gain looks like nothing.
+  const low = Math.min(projection.from, projection.to) - 40;
+  const high = Math.max(projection.to, projection.target ?? projection.to) + 40;
+  const pos = (value: number) =>
+    Math.min(100, Math.max(0, ((value - low) / (high - low)) * 100));
+
+  return (
+    <div className="mt-3">
+      <div className="bg-surface-2 relative h-2 rounded-full">
+        <div
+          className="absolute inset-y-0 left-0 rounded-full"
+          style={{
+            left: `${pos(projection.from)}%`,
+            width: `${Math.max(pos(projection.to) - pos(projection.from), 1.5)}%`,
+            background: "var(--amber)",
+          }}
+        />
+        {projection.target !== null && (
+          <span
+            aria-hidden
+            className="absolute top-1/2 h-4 w-0.5 -translate-y-1/2"
+            style={{
+              left: `${pos(projection.target)}%`,
+              background: "var(--text-faint)",
+            }}
+          />
+        )}
+      </div>
+      <div className="text-ink-faint mt-1.5 flex justify-between text-[11px]">
+        <span className="tabular">now {projection.from}</span>
+        {projection.target !== null && (
+          <span className="tabular">target {projection.target}</span>
+        )}
+      </div>
+    </div>
   );
 }
 
