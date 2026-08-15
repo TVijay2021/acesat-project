@@ -11,7 +11,7 @@ import { Button, Card, Eyebrow } from "./ui";
  * Renders a prompt instead of a plan when no date is set — an invented
  * schedule is worse than asking for the one fact it needs.
  */
-export function ExamPlan({ onTakeTest }: { onTakeTest: () => void }) {
+export function ExamPlan() {
   const { profile, attempts, exams } = useBeacon();
   const [editing, setEditing] = useState(false);
 
@@ -97,33 +97,6 @@ export function ExamPlan({ onTakeTest }: { onTakeTest: () => void }) {
           </li>
         ))}
       </ol>
-
-      {/* Full-length sittings, scheduled rather than offered constantly. */}
-      <div className="border-line space-y-3 border-t pt-4">
-        <Eyebrow>Practice tests</Eyebrow>
-        <p className="text-ink-muted text-sm leading-relaxed">
-          {plan.practiceTests.reason}
-        </p>
-        {plan.practiceTests.taken > 0 && (
-          <p className="text-ink-faint text-xs">
-            {plan.practiceTests.taken} taken ·{" "}
-            {plan.practiceTests.scheduledAtDaysOut.length} left before test day
-          </p>
-        )}
-        {plan.practiceTests.due && (
-          <Button onClick={onTakeTest}>Take a full-length test</Button>
-        )}
-        {!plan.practiceTests.due &&
-          plan.practiceTests.scheduledAtDaysOut.length > 0 && (
-            <button
-              type="button"
-              onClick={onTakeTest}
-              className="text-ink-muted min-h-9 text-[13px] font-semibold underline underline-offset-4"
-            >
-              Sit one early anyway
-            </button>
-          )}
-      </div>
 
       <div className="border-line space-y-3 border-t pt-4">
         <Eyebrow>Your pace</Eyebrow>

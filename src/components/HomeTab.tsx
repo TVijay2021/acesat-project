@@ -7,6 +7,7 @@ import { planForTime, TIME_BUDGETS, type TimeBudget } from "@/lib/timeplan";
 import type { TrainingSession } from "@/lib/types";
 import { Button, Card, Eyebrow } from "./ui";
 import { ExamPlan } from "./ExamPlan";
+import { PracticeTestCard } from "./PracticeTestCard";
 import { WhyThis } from "./WhyThis";
 
 export function HomeTab({
@@ -219,7 +220,9 @@ export function HomeTab({
       )}
 
       {/* ── Countdown and path to the booked test date ──────────────────── */}
-      <ExamPlan onTakeTest={onTakeTest} />
+      <PracticeTestCard onTakeTest={onTakeTest} />
+
+      <ExamPlan />
 
       {/* ── Or pick a subject ───────────────────────────────────────────── */}
       <div className="space-y-2.5">
