@@ -1,4 +1,5 @@
 import type { Attempt, Decision, Question, TrainingKind } from "../types";
+import { analyseCalibration } from "./calibration";
 import {
   type FocusArea,
   focusAreas,
@@ -12,10 +13,17 @@ export interface Diagnosis {
   area: FocusArea;
   kind: TrainingKind;
   /** Machine-readable reason, rendered into prose by the copy layer. */
-  signal: "slow-but-accurate" | "inaccurate" | "rushed-and-wrong" | "steady";
+  signal:
+    | "slow-but-accurate"
+    | "inaccurate"
+    | "rushed-and-wrong"
+    | "overconfident"
+    | "steady";
   /** Median time across all areas, for phrasing the comparison. */
   overallMedianMs: number;
   overallAccuracy: number;
+  /** Accuracy across answers rated "Sure", when miscalibration was diagnosed. */
+  sureAccuracy?: number;
 }
 
 /** How often each intervention kind has been confirmed vs missed. */
@@ -106,6 +114,27 @@ export function diagnose(
     return { area, kind, signal, weight };
   });
 
+  // Miscalibration outranks the domain ranking when it is clear.
+  //
+  // A student who is wrong on questions they were *certain* about will not be
+  // helped by more practice in that domain — they will make the same call
+  // faster. The intervention has to target the judgement, not the content, so
+  // this is checked before the accuracy and pacing signals rather than
+  // competing with them on weight.
+  const selfRating = analyseCalibration(attempts, questions);
+  if (selfRating.verdict === "overconfident" && selfRating.weakestArea) {
+    const area =
+      areas.find((a) => a.domain === selfRating.weakestArea!.domain) ?? areas[0];
+    return {
+      area,
+      kind: "strategy",
+      signal: "overconfident",
+      overallMedianMs: overall.medianTimeMs,
+      overallAccuracy: overall.accuracy,
+      sureAccuracy: selfRating.bands[0].accuracy,
+    };
+  }
+
   const best = scored
     .filter((s) => s.signal !== "steady")
     .sort((a, b) => b.weight - a.weight)[0];
@@ -148,6 +177,19 @@ export function buildPredictionCheck(
       guardAccuracy: Math.max(diagnosis.area.metrics.accuracy - 0.05, 0),
     };
   }
+  if (diagnosis.signal === "overconfident") {
+    // Measured only over answers the student rated "Sure" — the whole claim is
+    // about that band, so grading it against every attempt would let unrelated
+    // progress confirm a prediction Beacon never actually made.
+    return {
+      metric: "accuracy",
+      scope: { ...scope, confidence: "sure" },
+      direction: "increase",
+      baseline: diagnosis.sureAccuracy ?? diagnosis.area.metrics.accuracy,
+      threshold: 0.15,
+    };
+  }
+
   return {
     metric: "accuracy",
     scope,
@@ -183,6 +225,14 @@ export function describe(diagnosis: Diagnosis) {
         evidence: `You are moving fast on ${area.label} — ${areaSeconds}s per question against a ${overallSeconds}s average — but only ${accuracy}% are landing.`,
         action: "Assigned a set with a forced re-read step before answering.",
         prediction: "Your accuracy will rise as your pace settles.",
+      };
+    case "overconfident":
+      return {
+        focus: "Checking before committing",
+        evidence: `You have been marking answers "Sure" and getting them wrong — most often in ${area.label}. The marks are going on questions you were not double-checking.`,
+        action: "Assigned a set with a forced elimination check before each answer.",
+        prediction:
+          "Your accuracy on questions you mark Sure will rise as you slow down on the ones that feel obvious.",
       };
     case "inaccurate":
       return {
