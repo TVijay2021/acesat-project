@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 
 import { buildPredictionCheck, describe, diagnose } from "../src/lib/agent/decide";
 import { gradeDecision } from "../src/lib/agent/grade";
+import { analyseCalibration } from "../src/lib/agent/calibration";
 import type { Attempt, Decision, Question } from "../src/lib/types";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -114,3 +115,56 @@ assert.equal(gradeDecision(decision, thin, questions), null);
 console.log("\nPending   held back on 1 new attempt, as expected");
 
 console.log("\nAgent smoke test passed.");
+
+// ── Confidence calibration ────────────────────────────────────────────────
+// A student who is confidently wrong should be diagnosed on their judgement,
+// not sent to do more questions in the same domain.
+{
+  const reading = bank.questions.filter(
+    (q) => q.domain === "Craft and Structure"
+  );
+  const confidentlyWrong: Attempt[] = [];
+  let t = Date.UTC(2026, 7, 1);
+  for (const [i, q] of reading.slice(0, 10).entries()) {
+    t += 60_000;
+    confidentlyWrong.push({
+      questionId: q.id,
+      sessionId: "calib",
+      response: "Z",
+      // Sure on all ten, right on only three.
+      correct: i < 3,
+      elapsedMs: 55_000,
+      confidence: "sure",
+      mistakeReason: null,
+      answeredAt: t,
+      synced: true,
+    });
+  }
+
+  const report = analyseCalibration(confidentlyWrong, questions);
+  assert.equal(report.verdict, "overconfident");
+  assert.equal(report.falseConfidence, 7);
+  assert.equal(report.weakestArea?.domain, "Craft and Structure");
+
+  const d = diagnose(confidentlyWrong, questions);
+  assert.ok(d, "expected a diagnosis");
+  assert.equal(d.signal, "overconfident", "judgement outranks domain practice");
+  assert.equal(d.kind, "strategy");
+
+  const check = buildPredictionCheck(d);
+  assert.equal(
+    check.scope.confidence,
+    "sure",
+    "an overconfidence prediction must be graded only over confident answers"
+  );
+
+  console.log(`\nCalibration ${report.headline}`);
+  console.log(`             ${report.detail}`);
+
+  // Too few answers must stay silent rather than guess at a pattern.
+  const thin = analyseCalibration(confidentlyWrong.slice(0, 5), questions);
+  assert.equal(thin.verdict, "insufficient");
+  console.log("             held back on 5 answers, as expected");
+}
+
+console.log("\nCalibration smoke test passed.");
