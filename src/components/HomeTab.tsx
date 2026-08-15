@@ -13,10 +13,12 @@ export function HomeTab({
   onStartSession,
   onPractise,
   onOpenCoaching,
+  onTakeTest,
 }: {
   onStartSession: (session: TrainingSession) => void;
   onPractise: (subject: Subject) => void;
   onOpenCoaching: () => void;
+  onTakeTest: () => void;
 }) {
   const {
     online,
@@ -217,7 +219,7 @@ export function HomeTab({
       )}
 
       {/* ── Countdown and path to the booked test date ──────────────────── */}
-      <ExamPlan />
+      <ExamPlan onTakeTest={onTakeTest} />
 
       {/* ── Or pick a subject ───────────────────────────────────────────── */}
       <div className="space-y-2.5">

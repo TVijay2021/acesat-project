@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { BottomNav } from "@/components/BottomNav";
 import { CoachingSheet } from "@/components/CoachingSheet";
+import { ExamRunner } from "@/components/ExamRunner";
 import { HomeTab } from "@/components/HomeTab";
 import { LedgerTab } from "@/components/LedgerTab";
 import { Lighthouse } from "@/components/Lighthouse";
@@ -43,6 +44,7 @@ function App() {
   // One slot for whatever is being worked on, whether that is a packed block,
   // a block trimmed to fit the time available, or a subject the student chose.
   const [activeSession, setActiveSession] = useState<TrainingSession | null>(null);
+  const [examOpen, setExamOpen] = useState(false);
   const [coachingOpen, setCoachingOpen] = useState(false);
 
   if (!ready) {
@@ -88,6 +90,7 @@ function App() {
           {tab === "home" && (
             <HomeTab
               onStartSession={setActiveSession}
+              onTakeTest={() => setExamOpen(true)}
               onPractise={startPractice}
               onOpenCoaching={() => setCoachingOpen(true)}
             />
@@ -134,6 +137,8 @@ function App() {
           </div>
         </div>
       )}
+
+      {examOpen && <ExamRunner onExit={() => setExamOpen(false)} />}
 
       <SyncOverlay />
     </div>

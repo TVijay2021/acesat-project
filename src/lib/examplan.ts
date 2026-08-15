@@ -1,4 +1,4 @@
-import type { Attempt, StartingPoint } from "./types";
+import type { Attempt, ExamRecord, StartingPoint } from "./types";
 
 /**
  * The stage of preparation a student is in, chosen by how long is left.
@@ -62,7 +62,30 @@ export interface ExamPlan {
   onPace: boolean;
   /** Plain-language read on whether the target is realistic. */
   verdict: string;
+  /** Full-length sittings scheduled between now and test day. */
+  practiceTests: PracticeTestPlan;
 }
+
+export interface PracticeTestPlan {
+  /** Days-until-test marks where a full sitting belongs. */
+  scheduledAtDaysOut: number[];
+  taken: number;
+  /** True when the student is at or past a scheduled sitting they haven't done. */
+  due: boolean;
+  reason: string;
+}
+
+/**
+ * When to sit a full-length test.
+ *
+ * Spaced rather than frequent, and deliberately none in the last few days: a
+ * bad score on the eve of the test costs confidence and buys no information
+ * the student can still act on. The early one is diagnostic, the middle one
+ * checks whether the work is landing, the last is a dress rehearsal with just
+ * enough time left to fix what it exposes.
+ */
+const TEST_MARKS = [56, 28, 12];
+const NO_TEST_WINDOW = 5;
 
 /**
  * Roughly how many points a focused practice session is worth.
@@ -107,7 +130,8 @@ export function phaseFor(daysLeft: number): PhaseSpec {
 export function buildExamPlan(
   startingPoint: StartingPoint | null,
   attempts: Attempt[],
-  now = new Date()
+  now = new Date(),
+  exams: ExamRecord[] = []
 ): ExamPlan | null {
   if (!startingPoint?.testDate) return null;
 
@@ -139,6 +163,54 @@ export function buildExamPlan(
     sessionsThisWeek,
     onPace: sessionsThisWeek >= sessionsPerWeek,
     verdict: verdictFor(pointsNeeded, weeksLeft, sessionsPerWeek, daysLeft),
+    practiceTests: planPracticeTests(daysLeft, exams),
+  };
+}
+
+function planPracticeTests(
+  daysLeft: number,
+  exams: ExamRecord[]
+): PracticeTestPlan {
+  // Only the marks that still lie ahead are worth scheduling.
+  const scheduled = TEST_MARKS.filter(
+    (mark) => mark <= daysLeft && mark >= NO_TEST_WINDOW
+  );
+  const taken = exams.length;
+
+  if (daysLeft < NO_TEST_WINDOW) {
+    return {
+      scheduledAtDaysOut: [],
+      taken,
+      due: false,
+      reason:
+        "No more full sittings this close to the test. Review your mistake log instead — there is no longer time to act on what a new test would tell you.",
+    };
+  }
+
+  // Due when the student has passed a mark without having taken that sitting.
+  const passed = TEST_MARKS.filter((mark) => daysLeft <= mark).length;
+  const due = taken < passed;
+
+  if (due) {
+    return {
+      scheduledAtDaysOut: scheduled,
+      taken,
+      due: true,
+      reason:
+        taken === 0
+          ? "Sit a full-length test to give Beacon a real baseline. Everything after it gets more accurate."
+          : "You're due a full sitting. It is the only way to test whether the work is holding up under time.",
+    };
+  }
+
+  const next = scheduled[0];
+  return {
+    scheduledAtDaysOut: scheduled,
+    taken,
+    due: false,
+    reason: next
+      ? `Next full sitting at ${next} days out — ${daysLeft - next} ${daysLeft - next === 1 ? "day" : "days"} from now.`
+      : "No further full sittings scheduled before test day.",
   };
 }
 
