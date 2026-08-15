@@ -6,6 +6,7 @@ import { subjectOf, SUBJECT_META, SUBJECTS, type Subject } from "@/lib/subjects"
 import { planForTime, TIME_BUDGETS, type TimeBudget } from "@/lib/timeplan";
 import type { TrainingSession } from "@/lib/types";
 import { Button, Card, Eyebrow } from "./ui";
+import { ExamPlan } from "./ExamPlan";
 import { WhyThis } from "./WhyThis";
 
 export function HomeTab({
@@ -214,6 +215,9 @@ export function HomeTab({
           </p>
         </Card>
       )}
+
+      {/* ── Countdown and path to the booked test date ──────────────────── */}
+      <ExamPlan />
 
       {/* ── Or pick a subject ───────────────────────────────────────────── */}
       <div className="space-y-2.5">
