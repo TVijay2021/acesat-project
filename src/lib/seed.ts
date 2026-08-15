@@ -3,6 +3,7 @@ import { db } from "./db";
 import { suggestTip } from "./agent/tip";
 import type {
   Attempt,
+  Confidence,
   Decision,
   MistakeReason,
   Question,
@@ -27,7 +28,7 @@ const BANK_FINGERPRINT = [
   allQuestions.length,
   allQuestions[0]?.id ?? "none",
   allQuestions[allQuestions.length - 1]?.id ?? "none",
-].join(":") + ":v2";
+].join(":") + ":v3";
 
 const FINGERPRINT_KEY = "beacon.bank";
 
@@ -98,7 +99,12 @@ export async function seedIfEmpty(): Promise<void> {
   ];
   let missCount = 0;
 
-  function log(question: Question, correct: boolean, elapsedMs: number) {
+  function log(
+    question: Question,
+    correct: boolean,
+    elapsedMs: number,
+    confidence: Confidence = correct ? "sure" : "unsure"
+  ) {
     clock += 4 * 60_000;
     const reason = correct ? null : REASONS[missCount++ % REASONS.length];
     attempts.push({
@@ -107,7 +113,7 @@ export async function seedIfEmpty(): Promise<void> {
       response: correct ? question.answer : wrongAnswer(question),
       correct,
       elapsedMs,
-      confidence: correct ? "sure" : "unsure",
+      confidence,
       mistakeReason: reason,
       // The note is the point of the log, so seeded misses carry one too.
       note: reason ? suggestTip(question, reason) : undefined,
@@ -128,9 +134,11 @@ export async function seedIfEmpty(): Promise<void> {
   for (const [i, q] of byDomain("Advanced Math", 6).entries()) {
     log(q, i % 3 !== 0, 74_000);
   }
-  // A genuine knowledge gap, slower to move.
+  // A genuine knowledge gap, slower to move — and the student does not know
+  // it yet. Rating these "sure" is what gives the confidence check something
+  // true to say on the first load, rather than an empty state.
   for (const [i, q] of byDomain("Craft and Structure", 6).entries()) {
-    log(q, i % 3 === 0, 52_000);
+    log(q, i % 3 === 0, 52_000, "sure");
   }
   for (const [i, q] of byDomain("Information and Ideas", 5).entries()) {
     log(q, i !== 2, 48_000);
