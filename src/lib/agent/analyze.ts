@@ -1,4 +1,4 @@
-import type { Attempt, Question, Section } from "../types";
+import type { Attempt, Confidence, Question, Section } from "../types";
 
 export interface Metrics {
   count: number;
@@ -41,13 +41,14 @@ export function measure(attempts: Attempt[]): Metrics {
 export function scoped(
   attempts: Attempt[],
   questions: Map<string, Question>,
-  scope: { domain?: string; section?: Section }
+  scope: { domain?: string; section?: Section; confidence?: Confidence }
 ): Attempt[] {
   return attempts.filter((attempt) => {
     const question = questions.get(attempt.questionId);
     if (!question) return false;
     if (scope.domain && question.domain !== scope.domain) return false;
     if (scope.section && question.section !== scope.section) return false;
+    if (scope.confidence && attempt.confidence !== scope.confidence) return false;
     return true;
   });
 }

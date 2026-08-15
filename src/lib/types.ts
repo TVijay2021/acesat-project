@@ -122,8 +122,12 @@ export interface Decision {
  */
 export interface PredictionCheck {
   metric: "medianTimeMs" | "accuracy";
-  /** Attempts are filtered to this focus area before measuring. */
-  scope: { domain?: string; section?: Section };
+  /**
+   * Attempts are filtered to this focus area before measuring. A `confidence`
+   * scope narrows to one self-rating band, so Beacon can predict specifically
+   * about the questions a student *thought* they had right.
+   */
+  scope: { domain?: string; section?: Section; confidence?: Confidence };
   direction: "decrease" | "increase" | "hold";
   /** Baseline measured when the decision was made. */
   baseline: number;
