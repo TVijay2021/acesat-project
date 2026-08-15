@@ -109,8 +109,7 @@ key**, falling back to template copy.
 
 The coaching notes are templates for the same reason plus a practical one: they
 are written the instant a question is marked wrong, offline, with no key. The
-student sees a draft already filled in and can keep it, rewrite it, or clear it
-— the point is that a blank box is never the reason the log stays empty.
+student sees a draft already filled in and can keep it or rewrite it.
 
 ## Running it
 
@@ -135,9 +134,9 @@ and fails loudly rather than shipping a thin or malformed bank.
 **120 math questions** — `scripts/build-generated-bank.mjs`. Twelve
 parameterized templates across Algebra, Advanced Math, Problem-Solving and Data
 Analysis, and Geometry and Trigonometry. Stems, answers, and distractors are all
-computed. Distractors encode real student errors — a sign flip, treating
+computed. Distractors encode real student errors (ex. a sign flip, treating
 exponential decay as linear, inverting a similar-triangle ratio, stopping before
-the square root — so a wrong answer is diagnostic rather than noise.
+the square root) so a wrong answer is diagnostic rather than noise.
 
 **41 Reading and Writing questions** — `scripts/authored-reading-writing.mjs`.
 Reading questions can't be templated; the judgement *is* the question. These are
@@ -162,8 +161,8 @@ practice material matches the shape of the real thing.
 ## Accessibility
 
 Built for students on older phones, small screens, and intermittent
-connectivity: offline is a first-class state (never an error), high contrast in
-both light and dark mode themes, large touch targets, reduced-motion honoured,
+connectivity: offline is a first-class state (never an error),
+both light and dark mode themes, large touch targets, reduced-motion honored,
 and no information conveyed by color alone.
 
 ## Demos
