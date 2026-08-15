@@ -4,6 +4,7 @@ import { focusAreas, measure, percent, seconds } from "@/lib/agent/analyze";
 import { diagnose } from "@/lib/agent/decide";
 import { daysUntilTest } from "@/lib/profile";
 import { useBeacon } from "@/lib/store";
+import { CalibrationCard } from "./CalibrationCard";
 import { Card, Eyebrow, Meter } from "./ui";
 
 export function ProgressTab() {
@@ -61,6 +62,9 @@ export function ProgressTab() {
           </p>
         </div>
       </Card>
+
+      {/* How well the student's own sense of certainty tracks reality. */}
+      <CalibrationCard />
 
       <Card className="space-y-4">
         <Eyebrow>Accuracy by area</Eyebrow>
