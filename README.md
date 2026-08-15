@@ -1,15 +1,17 @@
-# Beacon — Offline SAT Coach
+# <img src="./public/icon-maskable.svg" alt="Beacon Logo" width="32" height="32" style="vertical-align: middle; margin-right: 8px;"> Beacon (Offline SAT Coach)
 
-Beacon is an offline-first SAT coaching PWA. When the student has internet, it
-analyses their practice, decides what to work on next, and packs a training
-route onto the device. The student then trains with no connection at all. On
+Beacon is an offline-first SAT coach that acts like an agent, not a chatbot.
+When the student has internet, it analyzes their practice, decides what to work on next, and prepares a training
+route. The student can then train with no WiFi connection at all. Upon
 reconnect, Beacon checks whether its own advice actually worked and recalibrates.
 
 **The student is the ship. Beacon is the lighthouse.**
 
 ```
-CONNECT → ANALYZE → PLAN → PACK → GO OFFLINE → TRAIN → RETURN → LEARN → RECALIBRATE
+CONNECT → ANALYZE → PLAN → PACK → GO OFFLINE → TRAIN → RETURN → LEARN → RESYNC
 ```
+
+*Submission for the AceSAT Hackathon 2026.*
 
 ## Why this is not a chatbot
 
@@ -25,24 +27,13 @@ that prediction in code:
 | **Prediction** | Your pacing will improve without reducing accuracy. |
 | **Outcome** | Confirmed — pacing improved by 25s per question while accuracy held at 83%. |
 
-Beacon records when it was **wrong**, too, and changes approach. That self-check
-is the product.
-
 ## What the student sees
 
 Five screens, each answering one question.
 
 **Home — "what should I do right now?"** Opens with *how much time do you have* —
-5, 10, 20, or 30+ minutes — and fits the plan to the answer. Under five minutes
-the plan collapses to a single action:
-
-> **If you only do one thing today**
-> 2 questions on timing under pressure
-> *You are answering Algebra questions at 83% accuracy, but spending 82% longer
-> than your average.*
-
-Below that, Math / Reading / Writing cards carrying live accuracy, so practising
-what you feel like doesn't require waiting for Beacon to agree it's the priority.
+5, 10, 20, or 30+ minutes — and fits the plan to the answer. 
+Students can also input their test date and target score, and Beacon plans backwards accordingly.
 
 **Train — "what's packed?"** The full route, offline and ready.
 
@@ -56,7 +47,7 @@ point if you gave one.
 
 **Beacon — "was it right?"** The Decision Ledger.
 
-## Personalisation
+## Personalization
 
 Beacon adapts how it coaches, not just what it assigns.
 
@@ -68,9 +59,7 @@ screen previews a real note that rewrites itself as you choose, because a
 preference whose effect you have to imagine doesn't get set honestly.
 
 **Starting point.** An optional first-run step for previous scores, target, and
-test date. Every field is skippable and the framing is a bearing rather than a
-grade — *"Where are you setting out from?"*, never *"your performance"*. Skipping
-costs nothing; Beacon derives everything else from practice.
+test date. Skipping costs nothing; Beacon derives everything else from practice.
 
 **Why Beacon chose this.** Every recommendation carries a collapsed explanation
 holding what Beacon observed and what it predicts, linking to the ledger entry
@@ -115,7 +104,7 @@ The decision logic is **deterministic TypeScript**, not a model call:
 Claude (Haiku 4.5) is used for one job: rewriting the computed decision into the
 two sentences the student reads. This is a deliberate choice — a model asked
 "did your prediction come true?" will tend to say yes, so the grading stays in
-code where it is reproducible and auditable. **The app runs fully without an API
+code where it is reproducible and auditable. **The app can run fully without an API
 key**, falling back to template copy.
 
 The coaching notes are templates for the same reason plus a practical one: they
@@ -144,12 +133,11 @@ College Board or any other publisher.
 and fails loudly rather than shipping a thin or malformed bank.
 
 **120 math questions** — `scripts/build-generated-bank.mjs`. Twelve
-parameterised templates across Algebra, Advanced Math, Problem-Solving and Data
+parameterized templates across Algebra, Advanced Math, Problem-Solving and Data
 Analysis, and Geometry and Trigonometry. Stems, answers, and distractors are all
 computed. Distractors encode real student errors — a sign flip, treating
 exponential decay as linear, inverting a similar-triangle ratio, stopping before
-the square root — so a wrong answer is diagnostic rather than noise. The
-generator is seeded, so the bank is identical on every machine.
+the square root — so a wrong answer is diagnostic rather than noise.
 
 **41 Reading and Writing questions** — `scripts/authored-reading-writing.mjs`.
 Reading questions can't be templated; the judgement *is* the question. These are
@@ -159,7 +147,7 @@ Rhetorical Synthesis, Cross-Text Connections, Boundaries, and Form, Structure,
 and Sense.
 
 The build validates both sets: exactly four distinct choices, a key that
-resolves to a real choice, no NaN or empty values, and the correct answer
+resolves to a real choice and the correct answer
 rotated evenly across A–D so no letter is worth guessing.
 
 ### Calibration
@@ -171,30 +159,18 @@ runs (~48 words) against a Cross-Text Connections pair (~129), and which stem
 phrasings are standard. Authored items are written to those bands so the
 practice material matches the shape of the real thing.
 
-### Known gap
-
-The bank is 74% math against roughly 44% on the real test. Math generates
-cheaply and reading does not. The next work is more authored Reading and Writing
-items — Standard English Conventions (6) and Expression of Ideas (9) are
-thinnest, and a route focused on either will start repeating questions.
-
-## Content and licensing
-
-Every question here is original to this project. The math items are computed
-from templates written for this repository; the reading items were authored for
-it, over passages written for it.
-
-The calibration profile is derived from published question banks but contains
-only unprotected facts — counts, distributions, length bands, and standardised
-stem formats. No passage, answer choice, or rationale from any third party
-appears in this repository.
-
 ## Accessibility
 
 Built for students on older phones, small screens, and intermittent
 connectivity: offline is a first-class state (never an error), high contrast in
-both themes, large touch targets, keyboard navigable, reduced-motion honoured,
-and no information conveyed by colour alone.
+both light and dark mode themes, large touch targets, reduced-motion honoured,
+and no information conveyed by color alone.
 
-## AI Acknowledgement
-We acknowledge the use of Claude to assist with code generation  for this project. The conceptual framework of this project was  human-designed, and the AI was used to execute human-initiated prompts. We thoroughly reviewed, edited, and tested the code to ensure its functionality. The implementation reflects our work and verification.
+## Demos
+> Home - Page
+
+![Home Page Demo](images/HomePageDemo.gif)
+
+## AI-assisted development
+
+This project was developed with assistance from Claude (Anthropic). The conceptual framework of this project was  human-designed, and the AI was used to execute human-initiated prompts. We thoroughly reviewed, edited, and tested the code to ensure its functionality.
