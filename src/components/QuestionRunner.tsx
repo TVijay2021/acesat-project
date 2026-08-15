@@ -129,7 +129,7 @@ export function QuestionRunner({
     }
 
     if (isLast) {
-      await completeSession(session.id);
+      await completeSession(session);
       onExit();
       return;
     }

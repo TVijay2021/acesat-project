@@ -48,7 +48,7 @@ interface BeaconState {
   /** Returns the stored id so the reflection can be attached on the next step. */
   recordAttempt: (attempt: Omit<Attempt, "id">) => Promise<number>;
   updateAttempt: (id: number, changes: Partial<Attempt>) => Promise<void>;
-  completeSession: (sessionId: string) => Promise<void>;
+  completeSession: (session: TrainingSession) => Promise<void>;
   refresh: () => Promise<void>;
   sync: SyncState;
   startSync: () => Promise<void>;
@@ -148,9 +148,33 @@ export function BeaconProvider({ children }: { children: React.ReactNode }) {
     [refresh]
   );
 
+  /**
+   * Marks a finished block complete.
+   *
+   * Takes the session rather than an id because derived blocks — a trimmed
+   * block that fits a short budget — carry a synthetic id that has no row in
+   * the database. Writing against that id silently updates nothing (Dexie
+   * returns 0 rather than throwing), which leaves the route stuck and the home
+   * screen recommending work the student has already done.
+   */
   const completeSession = useCallback(
-    async (sessionId: string) => {
-      await db.sessions.update(sessionId, { completedAt: Date.now() });
+    async (session: TrainingSession) => {
+      // Self-directed practice is not part of a route, so there is nothing to
+      // advance. The attempts it produced still count at the next check-in.
+      if (session.routeId === "practice") {
+        await refresh();
+        return;
+      }
+
+      const storedId = session.sourceId ?? session.id;
+      const updated = await db.sessions.update(storedId, {
+        completedAt: Date.now(),
+      });
+      if (updated === 0 && process.env.NODE_ENV !== "production") {
+        console.warn(
+          `completeSession: no stored session for "${storedId}" — the route will not advance.`
+        );
+      }
       await refresh();
     },
     [refresh]

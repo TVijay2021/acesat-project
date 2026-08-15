@@ -50,6 +50,10 @@ export function planForTime(
     .filter((s) => s.completedAt === null)
     .sort((a, b) => a.day - b.day);
 
+  // Questions already answered are not worth serving again inside the same
+  // route — a short second sitting should move the student forward.
+  const answered = new Set(attempts.map((a) => a.questionId));
+
   if (remaining.length === 0) {
     return { blocks: [], totalMinutes: 0, oneThing: null };
   }
@@ -59,7 +63,7 @@ export function planForTime(
     return {
       blocks: [],
       totalMinutes: 0,
-      oneThing: buildOneThing(remaining[0], decisions, attempts, questions, 2),
+      oneThing: buildOneThing(remaining[0], decisions, attempts, questions, 2, answered),
     };
   }
 
@@ -76,7 +80,7 @@ export function planForTime(
     const spare = budget - used;
     if (blocks.length === 0 && spare >= MINUTES_PER_QUESTION * 2) {
       const count = Math.floor(spare / MINUTES_PER_QUESTION);
-      blocks.push(trim(session, count));
+      blocks.push(trim(session, count, answered));
       used += count * MINUTES_PER_QUESTION;
     }
     break;
@@ -86,7 +90,7 @@ export function planForTime(
     return {
       blocks: [],
       totalMinutes: 0,
-      oneThing: buildOneThing(remaining[0], decisions, attempts, questions, 2),
+      oneThing: buildOneThing(remaining[0], decisions, attempts, questions, 2, answered),
     };
   }
 
@@ -96,19 +100,31 @@ export function planForTime(
 /**
  * A shorter version of a block.
  *
- * A trimmed block gets its own id so finishing it does not mark the full block
- * complete — the student who squeezed in two questions on the bus should still
- * find the whole session waiting when they have twenty minutes. The answers
- * count either way, since Beacon grades attempts rather than completions.
+ * The trimmed block gets its own id so it is distinguishable in the UI, and
+ * `sourceId` points back at the stored row so finishing it still advances the
+ * route. Without that link the student finishes the work Beacon asked for and
+ * the home screen recommends the very same thing again.
+ *
+ * Questions the student has already answered are dropped first, so a second
+ * short session serves new material rather than repeating the first two.
  */
-function trim(session: TrainingSession, count: number): TrainingSession {
+function trim(
+  session: TrainingSession,
+  count: number,
+  answered: Set<string> = new Set()
+): TrainingSession {
   const wanted = Math.max(1, count);
-  if (wanted >= session.questionIds.length) return session;
+  const unanswered = session.questionIds.filter((id) => !answered.has(id));
+  const pool = unanswered.length > 0 ? unanswered : session.questionIds;
+  if (wanted >= pool.length && pool.length === session.questionIds.length) {
+    return session;
+  }
 
-  const questionIds = session.questionIds.slice(0, wanted);
+  const questionIds = pool.slice(0, wanted);
   return {
     ...session,
     id: `${session.id}-part`,
+    sourceId: session.sourceId ?? session.id,
     questionIds,
     estimatedMinutes: Math.max(2, questionIds.length * MINUTES_PER_QUESTION),
   };
@@ -125,14 +141,20 @@ function buildOneThing(
   decisions: Decision[],
   attempts: Attempt[],
   questions: Map<string, Question>,
-  count: number
+  count: number,
+  answered: Set<string>
 ): OneThing {
-  const trimmed = trim(session, count);
+  const trimmed = trim(session, count, answered);
   const pending = decisions.find((d) => d.outcome === "pending");
+  const served = trimmed.questionIds.length;
 
   if (pending) {
     return {
-      headline: `${count} questions on ${pending.focus.toLowerCase()}`,
+      // Named after the work actually being served, not the standing focus.
+      // Keying the headline off the pending decision made every block read
+      // "questions on timing under pressure", so the screen looked frozen even
+      // as the route advanced underneath it.
+      headline: `${served} ${served === 1 ? "question" : "questions"} · ${topicOf(trimmed, questions) ?? session.title}`,
       reason: pending.evidence,
       minutes: trimmed.estimatedMinutes,
       session: trimmed,
@@ -142,7 +164,7 @@ function buildOneThing(
   const worst = mostCostlySkill(attempts, questions);
   if (worst) {
     return {
-      headline: `${count} questions on ${worst.skill.toLowerCase()}`,
+      headline: `${served} ${served === 1 ? "question" : "questions"} on ${worst.skill.toLowerCase()}`,
       reason: `${worst.misses} of your recent misses were ${worst.skill} questions — more than any other skill.`,
       minutes: trimmed.estimatedMinutes,
       session: trimmed,
@@ -150,11 +172,25 @@ function buildOneThing(
   }
 
   return {
-    headline: `${count} questions from ${session.title}`,
+    headline: `${served} ${served === 1 ? "question" : "questions"} · ${topicOf(trimmed, questions) ?? session.title}`,
     reason: "This is the first block of your current route.",
     minutes: trimmed.estimatedMinutes,
     session: trimmed,
   };
+}
+
+/** The dominant skill among a block's questions, for naming it to the student. */
+function topicOf(
+  session: TrainingSession,
+  questions: Map<string, Question>
+): string | null {
+  const tally = new Map<string, number>();
+  for (const id of session.questionIds) {
+    const question = questions.get(id);
+    if (!question) continue;
+    tally.set(question.skill, (tally.get(question.skill) ?? 0) + 1);
+  }
+  return [...tally.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
 }
 
 function mostCostlySkill(

@@ -70,6 +70,12 @@ export interface TrainingSession {
   completedAt: number | null;
   /** Day index within the route, 0-based. */
   day: number;
+  /**
+   * Set on blocks derived from a stored session — a trimmed block that fits a
+   * short time budget, for example. Completion has to be written against the
+   * stored row, so anything derived must carry a way back to it.
+   */
+  sourceId?: string;
 }
 
 /** The packed offline plan. Beacon prepares one per sync. */
