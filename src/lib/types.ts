@@ -188,3 +188,27 @@ export interface MemoryCard {
   body: string;
   decisionId: string;
 }
+
+/**
+ * A completed full-length practice test.
+ *
+ * Stored whole rather than derived from attempts: a sitting is a distinct
+ * event with its own conditions (timed, adaptive routing, no explanations
+ * until the end), and folding it into ordinary practice history would let a
+ * bad exam day quietly reshape the daily route.
+ */
+export interface ExamRecord {
+  id: string;
+  takenAt: number;
+  /** 1 for a full-length sitting, lower when the bank forced a short form. */
+  scale: number;
+  readingWriting: number;
+  math: number;
+  total: number;
+  correct: number;
+  answered: number;
+  questions: number;
+  findings: string[];
+  recommendation: string;
+  weakestDomain: string | null;
+}

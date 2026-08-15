@@ -8,7 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { currentRoute, db, ledger, sessionsForRoute } from "./db";
+import { currentRoute, db, examHistory, ledger, sessionsForRoute } from "./db";
 import { loadProfile, saveProfile } from "./profile";
 import { seedIfEmpty } from "./seed";
 import { runSync, SYNC_STAGES, type SyncSummary } from "./sync";
@@ -17,6 +17,7 @@ import type {
   CoachingPreferences,
   Confidence,
   Decision,
+  ExamRecord,
   LearnerProfile,
   MistakeReason,
   Question,
@@ -35,6 +36,7 @@ interface BeaconState {
   decisions: Decision[];
   route: Route | null;
   sessions: TrainingSession[];
+  exams: ExamRecord[];
   tab: Tab;
   setTab: (tab: Tab) => void;
   /** Coaching preferences, starting point, and first-run state. */
@@ -72,6 +74,7 @@ export function BeaconProvider({ children }: { children: React.ReactNode }) {
   const [decisions, setDecisions] = useState<Decision[]>([]);
   const [route, setRoute] = useState<Route | null>(null);
   const [sessions, setSessions] = useState<TrainingSession[]>([]);
+  const [exams, setExams] = useState<ExamRecord[]>([]);
   const [tab, setTab] = useState<Tab>("home");
   // Read once on mount rather than during render, so the server and the first
   // client render agree and hydration stays quiet.
@@ -93,17 +96,19 @@ export function BeaconProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const refresh = useCallback(async () => {
-    const [allQuestions, allAttempts, allDecisions, activeRoute] =
+    const [allQuestions, allAttempts, allDecisions, activeRoute, allExams] =
       await Promise.all([
         db.questions.toArray(),
         db.attempts.toArray(),
         ledger(),
         currentRoute(),
+        examHistory(),
       ]);
     setQuestions(new Map(allQuestions.map((q) => [q.id, q])));
     setAttempts(allAttempts);
     setDecisions(allDecisions);
     setRoute(activeRoute);
+    setExams(allExams);
     setSessions(activeRoute ? await sessionsForRoute(activeRoute.id) : []);
   }, []);
 
@@ -236,6 +241,7 @@ export function BeaconProvider({ children }: { children: React.ReactNode }) {
       decisions,
       route,
       sessions,
+      exams,
       tab,
       setTab,
       simulateOffline,
@@ -262,6 +268,7 @@ export function BeaconProvider({ children }: { children: React.ReactNode }) {
       decisions,
       route,
       sessions,
+      exams,
       tab,
       recordAttempt,
       updateAttempt,

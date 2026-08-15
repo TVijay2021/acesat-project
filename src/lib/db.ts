@@ -4,6 +4,7 @@ import type {
   Decision,
   MemoryCard,
   Question,
+  ExamRecord,
   Route,
   TrainingSession,
 } from "./types";
@@ -20,6 +21,7 @@ class BeaconDB extends Dexie {
   routes!: EntityTable<Route, "id">;
   decisions!: EntityTable<Decision, "id">;
   cards!: EntityTable<MemoryCard, "id">;
+  exams!: EntityTable<ExamRecord, "id">;
 
   constructor() {
     super("beacon");
@@ -30,6 +32,12 @@ class BeaconDB extends Dexie {
       routes: "id, createdAt",
       decisions: "id, createdAt, outcome",
       cards: "id, createdAt",
+    });
+    // Practice tests arrived after the first schema, so they get their own
+    // version rather than mutating v1 — an existing database must keep its
+    // data when a returning student loads the new build.
+    this.version(2).stores({
+      exams: "id, takenAt",
     });
   }
 }
@@ -64,4 +72,9 @@ export async function ledger(): Promise<Decision[]> {
 /** Attempts Beacon has not yet folded into a decision outcome. */
 export async function unsyncedAttempts(): Promise<Attempt[]> {
   return db.attempts.filter((a) => !a.synced).toArray();
+}
+
+/** Practice tests taken, newest first. */
+export async function examHistory(): Promise<ExamRecord[]> {
+  return db.exams.orderBy("takenAt").reverse().toArray();
 }
